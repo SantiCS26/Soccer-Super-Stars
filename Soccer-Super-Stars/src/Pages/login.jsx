@@ -15,8 +15,8 @@ export default function Login() {
     <div className="w-full max-w-sm bg-white p-8 rounded-2xl shadow-lg">
       <h2 className="text-2xl font-semibold text-center mb-6">Login</h2>
       <form onSubmit={handleLogin}>
-        <InputField label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <InputField label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <Input label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
 
         <button
           type="submit"
