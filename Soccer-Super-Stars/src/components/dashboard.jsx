@@ -12,7 +12,7 @@ export default function Dashboard() {
         color: "white",
       }}
     >
-      <Link to="/">Home page</Link>
+      <Link to="/home">Home page</Link>
       <Link to="/game">Play Game</Link>
       <Link to="/leaderboard">Leaderboard</Link>
       <Link to="/profile">My Profile</Link>
