@@ -1,0 +1,24 @@
+html, body {
+	margin: 0;
+	padding: 0;
+	height: 100%;
+	overflow: hidden;
+}
+
+.pageWrapper {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: flex-start;
+	height: 100vh;
+	padding-top: 60px;
+	box-sizing: border-box;
+	font-family: sans-serif;
+	color: white;
+}
+
+.pageTitle {
+	margin-bottom: 10px;
+	color: white;
+	text-align: center;
+}

@@ -1,15 +1,16 @@
+import "../Pages-style/global.css"
 import "../Pages-style/leaderboard.css";
 
 const players = [
     { username: "Joe", score: 50},
     { username: "Santi", score: 25},
     { username: "Joeski", score: 0},
-  ];
+];
 
 export default function Leaderboard() {
 	return (
-		<div className="p-6 text-center">
-			<h1 className="text-3xl font-bold mb-0">Leaderboard</h1>
+		<div className="pageWrapper">
+			<h1 className="pageTitle">Leaderboard</h1>
 
             <div className="Leaderboard">
                 <table>
