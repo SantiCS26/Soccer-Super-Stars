@@ -6,8 +6,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const port = 5000;
-const hostname = "localhost";
+const PORT = process.env.PORT || 5000;
 const { Pool } = pkg;
 
 const app = express();
@@ -70,6 +69,6 @@ app.post("/api/login", async (req, res) => {
   }
 });
 
-app.listen(port, hostname, () => {
-  console.log(`Listening at: http://${hostname}:${port}`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT}`);
 });
