@@ -1,0 +1,46 @@
+.settingsBox {
+	width: 900px;
+	height: 580px;
+	box-sizing: border-box;
+	margin: 20px auto;
+	border: 1px solid #ccc;
+	border-radius: 6px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	background: #1f2937;
+	color: white;
+}
+
+.settingsTitle {
+	font-size: 1.8em;
+	margin-bottom: 10px;
+}
+
+.settingsLabel {
+	font-weight: bold;
+	margin-bottom: 4px;
+}
+
+.settingsSelect {
+	width: 200px;
+	padding: 6px 8px;
+	border: 1px solid #aaa;
+	border-radius: 4px;
+}
+
+.settingsButton {
+	margin-top: 30px;
+	width: 200px;
+	padding: 8px 0;
+	background-color: #0d6efd;
+	color: white;
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+.settingsGroup {
+	margin-top: 14px;
+}
