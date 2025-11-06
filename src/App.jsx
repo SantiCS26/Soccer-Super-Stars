@@ -9,19 +9,19 @@ import Login from "./Pages/login";
 import Register from "./Pages/register.jsx";
 
 function App() {
-  return (
-    <Router>
-      <Dashboard />
-      <Routes>
+	return (
+		<Router>
+			<Dashboard />
+			<Routes>
 				<Route path="/" element={<Login />} />
 				<Route path="/register" element={<Register />} />
-        <Route path="/home" element={<Home />} />
-        <Route path="/game" element={<Game />} />
-        <Route path="/leaderboard" element={<Leaderboard />} />
-        <Route path="/profile" element={<Profile />} />
-      </Routes>
-    </Router>
-  );
+				<Route path="/home" element={<Home />} />
+				<Route path="/game" element={<Game />} />
+				<Route path="/leaderboard" element={<Leaderboard />} />
+				<Route path="/profile" element={<Profile />} />
+			</Routes>
+		</Router>
+	);
 }
 
 export default App;
