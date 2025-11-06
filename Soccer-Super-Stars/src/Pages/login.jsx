@@ -6,10 +6,27 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    console.log("Login submitted:", { email, password });
+  const handleLogin = async (e) => {
+  e.preventDefault();
+  try {
+    const response = await fetch("http://localhost:5000/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      alert("Login successful!");
+      console.log("User:", data.email);
+    } else {
+      alert(data.message);
+    }
+    } catch (error) {
+        console.error("Error logging in:", error);
+    }
   };
+
 
   return (
     <div className="w-full max-w-sm bg-white p-8 rounded-2xl shadow-lg">
