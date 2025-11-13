@@ -8,6 +8,19 @@ dotenv.config();
 
 const PORT = process.env.PORT || 8080;
 const { Pool } = pkg;
+let host;
+let databaseConfig;
+
+// fly.io sets NODE_ENV to production automatically, otherwise it's unset when running locally
+if (process.env.NODE_ENV == "production") {
+	host = "0.0.0.0";
+	databaseConfig = { connectionString: process.env.DATABASE_URL };
+} else {
+	host = "localhost";
+	let { PGUSER, PGPASSWORD, PGDATABASE, PGHOST, PGPORT } = process.env;
+	databaseConfig = { user: PGUSER, password: PGPASSWORD, database: PGDATABASE, host: PGHOST, port: PGPORT };
+}
+
 
 const app = express();
 
@@ -19,13 +32,12 @@ app.use(cors({
 
 app.use(express.json());
 
-const pool = new Pool({
-	connectionString: process.env.DATABASE_URL || "postgresql://postgres:@localhost:5432/soccersuperstars",
-});
+const pool = new Pool(databaseConfig);
 
 pool.connect()
-	.then(() => console.log("Connected to PostgreSQL"))
-	.catch(err => console.error("Connection error:", err.stack));
+    .then(() => console.log("Connected to PostgreSQL"))
+    .catch(err => console.error("Connection error:", err.stack));
+
 
 app.post("/api/register", async (req, res) => {
 	const { email, password } = req.body;
@@ -69,6 +81,6 @@ app.post("/api/login", async (req, res) => {
 	}
 });
 
-app.listen(PORT, "0.0.0.0", () => {
-	console.log(`Server running on port ${PORT}`);
+app.listen(PORT, host, () => {
+	console.log(`http://${host}:${port}`);
 });
