@@ -19,7 +19,7 @@ export default function Leaderboard() {
                             <th>Ranking #</th>
                             <th>Username</th>
                             <th>Score</th>
-                        </tr>
+                        </tr> 
                     
                     {players.map((value, key) => {
                         return (

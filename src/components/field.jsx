@@ -1,8 +1,8 @@
 export default function Field({ children }) {
     const fieldStyle = {
 		position: "relative",
-		width: 900,
-		height: 580,
+		width: 750,
+		height: 400,
 		background: "#1f2937",
 		border: "1px solid #ccc",
 		borderRadius: 6,

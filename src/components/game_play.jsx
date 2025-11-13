@@ -5,8 +5,8 @@ import { movePlayer } from "../Game/movement.js"
 import { useGameInputs } from "../Game/game_inputs.js"
 
 export default function GamePlay({ onExit }) {
-	const fieldWidth = 900
-	const fieldHeight = 580
+	const fieldWidth = 750
+	const fieldHeight = 400
 	const playerSpeed = 300
 
 	const playerElement = useRef(null)
