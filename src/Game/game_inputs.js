@@ -13,7 +13,7 @@ export function useGameInputs() {
 		}
 
 		window.addEventListener("keydown", handleKeyDown)
-		window.addEventListener("keyup", handleKeyUp)
+		window.addEventListener("keyup", handleKeyUp) 
 
 		return () => {
 			window.removeEventListener("keydown", handleKeyDown)

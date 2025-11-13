@@ -6,13 +6,13 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 const { Pool } = pkg;
 
 const app = express();
 
 app.use(cors({
-	origin: "http://localhost:5173",
+	origin: ["http://localhost:5173", "https://soccer-super-stars.fly.dev"],
 	methods: ["GET", "POST"],
 	allowedHeaders: ["Content-Type"]
 }));

@@ -2,19 +2,20 @@ export function movePlayer(playerData, keyState, deltaTime, fieldWidth, fieldHei
 	let moveX = 0
 	let moveY = 0
 
-	if (keyState.w) {
+	//TODO: Keybinding to be done later
+	if (keyState.w || keyState.arrowup) {
 		moveY -= 1
 	}
 
-	if (keyState.s) {
+	if (keyState.s || keyState.arrowdown) {
 		moveY += 1
 	}
 
-	if (keyState.a) {
+	if (keyState.a || keyState.arrowleft) {
 		moveX -= 1
 	}
 
-	if (keyState.d) {
+	if (keyState.d || keyState.arrowright) {
 		moveX += 1
 	}
 
