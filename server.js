@@ -18,7 +18,7 @@ if (process.env.NODE_ENV == "production") {
 } else {
 	host = "localhost";
 	let { PGUSER, PGPASSWORD, PGDATABASE, PGHOST, PGPORT } = process.env;
-	databaseConfig = { user: PGUSER, password: PGPASSWORD, database: PGDATABASE, host: PGHOST, port: PGPORT };
+	databaseConfig = { PGUSER, PGPASSWORD, PGDATABASE, PGHOST, PGPORT };
 }
 
 
@@ -26,7 +26,7 @@ const app = express();
 
 app.use(cors({
 	origin: ["http://localhost:5173", "https://soccer-super-stars.fly.dev"],
-	methods: ["GET", "POST"],
+	methods: ["GET", "POST", "OPTIONS"],
 	allowedHeaders: ["Content-Type"]
 }));
 
