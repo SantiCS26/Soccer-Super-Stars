@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import Input from "../components/input";
 
 export default function Register() {
-	const [email, setEmail] = useState("");
+	const [username, setusername] = useState("");
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
 	const navigate = useNavigate();
@@ -16,14 +16,14 @@ export default function Register() {
 			return;   
 		}
 
-		console.log("THIS IS THE BODY: ", JSON.stringify({ email, password }));
+		console.log("THIS IS THE BODY: ", JSON.stringify({ username, password }));
 		try {
 			const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 			const response = await fetch(`${API_BASE_URL}/api/register`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ email, password }),
+				body: JSON.stringify({ username, password }),
 			});
 
 			const data = await response.json();
@@ -44,7 +44,7 @@ export default function Register() {
 		<div className="w-full max-w-sm bg-white p-8 rounded-2xl shadow-lg">
 			<h2 className="text-2xl font-semibold text-center mb-6">Create Account</h2>
 			<form onSubmit={handleRegister}>
-				<Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+				<Input label="username" type="username" value={username} onChange={(e) => setusername(e.target.value)} />
 				<Input label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
 				<Input label="Confirm Password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
 

@@ -7,14 +7,14 @@ DROP TABLE IF EXISTS users;
 -- Create the table
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
-    email TEXT UNIQUE NOT NULL,
+    username TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL
 );
 
 -- Insert some dummy users
-INSERT INTO users (email, password) VALUES ('alice@example.com', 'password123');
-INSERT INTO users (email, password) VALUES ('bob@example.com', 'mypassword');
-INSERT INTO users (email, password) VALUES ('charlie@example.com', 'secretpass');
+INSERT INTO users (username, password) VALUES ('alice@example.com', 'password123');
+INSERT INTO users (username, password) VALUES ('bob@example.com', 'mypassword');
+INSERT INTO users (username, password) VALUES ('charlie@example.com', 'secretpass');
 
 SELECT * FROM users;
 
