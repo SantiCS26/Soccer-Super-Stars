@@ -9,7 +9,9 @@ export default function Login() {
 	const handleLogin = async (e) => {
 	e.preventDefault();
 	try {
-		const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+		const API_BASE_URL = import.meta.env.VITE_API_URL;
+		console.log("API BASE URL: ", API_BASE_URL);
+
 		const response = await fetch(`${API_BASE_URL}/api/login`, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
@@ -24,6 +26,7 @@ export default function Login() {
 			alert(data.message);
 		}
 		} catch (error) {
+			    console.log("Body being sent: ", JSON.stringify({ email, password }));
 				console.error("Error logging in:", error);
 		}
 	};
