@@ -3,27 +3,30 @@ import { Link } from "react-router-dom";
 import Input from "../components/input";
 
 export default function Login() {
-	const [email, setEmail] = useState("");
+	const [username, setusername] = useState("");
 	const [password, setPassword] = useState("");
 
 	const handleLogin = async (e) => {
 	e.preventDefault();
 	try {
-		const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+		const API_BASE_URL = import.meta.env.VITE_API_URL;
+		console.log("API BASE URL: ", API_BASE_URL);
+
 		const response = await fetch(`${API_BASE_URL}/api/login`, {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ email, password }),
+			body: JSON.stringify({ username, password }),
 		});
 
 		const data = await response.json();
 		if (response.ok) {
 			alert("Login successful!");
-			console.log("User:", data.email);
+			console.log("User:", data.username);
 		} else {
 			alert(data.message);
 		}
 		} catch (error) {
+			    console.log("Body being sent: ", JSON.stringify({ username, password }));
 				console.error("Error logging in:", error);
 		}
 	};
@@ -33,7 +36,7 @@ export default function Login() {
 		<div className="w-full max-w-sm bg-white p-8 rounded-2xl shadow-lg">
 			<h2 className="text-2xl font-semibold text-center mb-6">Login</h2>
 			<form onSubmit={handleLogin}>
-				<Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+				<Input label="username" type="username" value={username} onChange={(e) => setusername(e.target.value)} />
 				<Input label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
 
 				<button
