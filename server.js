@@ -20,35 +20,40 @@ let host;
 let databaseConfig;
 let rooms = {};
 
+const DEFAULT_SETTINGS = {
+	matchDurationSec: 180,
+	goalLimit: 5
+};
+
 if (process.env.FLY_APP_NAME) {
-    host = "0.0.0.0";
-    databaseConfig = { connectionString: process.env.DATABASE_URL };
+	host = "0.0.0.0";
+	databaseConfig = { connectionString: process.env.DATABASE_URL };
 } else {
-    host = "localhost";
-    let { PGUSER, PGPASSWORD, PGDATABASE, PGHOST, PGPORT } = process.env;
-    databaseConfig = {
-        user: PGUSER,
-        password: PGPASSWORD,
-        database: PGDATABASE,
-        host: PGHOST,
-        port: PGPORT
-    };
+	host = "localhost";
+	let { PGUSER, PGPASSWORD, PGDATABASE, PGHOST, PGPORT } = process.env;
+	databaseConfig = {
+		user: PGUSER,
+		password: PGPASSWORD,
+		database: PGDATABASE,
+		host: PGHOST,
+		port: PGPORT
+	};
 }
 
 
 let app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: {
-    origin: ["http://localhost:5173", "https://soccer-super-stars.fly.dev"],
-    methods: ["GET", "POST"],
-  }
+	cors: {
+		origin: ["http://localhost:5173", "https://soccer-super-stars.fly.dev"],
+		methods: ["GET", "POST"],
+	}
 });
 
 app.use(cors({
-  origin: ["http://localhost:5173", "https://soccer-super-stars.fly.dev"],
-  methods: ["GET","POST","OPTIONS"],
-  allowedHeaders: ["Content-Type"]
+	origin: ["http://localhost:5173", "https://soccer-super-stars.fly.dev"],
+	methods: ["GET","POST","OPTIONS"],
+	allowedHeaders: ["Content-Type"]
 }));
 app.use(express.json());
 
@@ -59,31 +64,28 @@ pool.connect().then(() => {
 });
 
 function generateRoomCode() {
-  let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  let result = "";
-  for (let i = 0; i < 4; i++) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return result;
+	let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	let result = "";
+	for (let i = 0; i < 4; i++) {
+		result += characters.charAt(Math.floor(Math.random() * characters.length));
+	}
+	return result;
 }
 
 // for debugging
 function printRooms() {
-  for (let [roomId, sockets] of Object.entries(rooms)) {
-    console.log(roomId);
-    for (let [socketId, socket] of Object.entries(sockets)) {
-      console.log(`\t${socketId}`);
-    }
-  }
+	for (let [roomId, sockets] of Object.entries(rooms)) {
+		console.log(roomId);
+		for (let [socketId, socket] of Object.entries(sockets)) {
+			console.log(`\t${socketId}`);
+		}
+	}
 }
 
 app.post("/create", (req, res) => {
-  	let roomId = generateRoomCode();
-  	rooms[roomId] = {};
-  	return res.json({ roomId });
+	const roomId = generateRoomCode();
+	return res.json({ roomId });
 });
-
-
 
 app.post("/api/register", async (req, res) => {
 	const { username, password } = req.body;
@@ -133,32 +135,178 @@ app.post("/api/login", async (req, res) => {
 app.use(express.static(path.join(__dirname, "dist")));
 
 io.on("connection", (socket) => {
-  console.log(`Socket connected: ${socket.id}`);
+	console.log(`Socket connected: ${socket.id}`);
 
-  socket.on("joinRoom", ({ roomId }) => {
-    if (!rooms[roomId]) rooms[roomId] = {};
-    rooms[roomId][socket.id] = socket;
-    socket.join(roomId);
+	const sendLobbyState = (roomId) => {
+		const room = rooms[roomId];
 
-    const players = Object.keys(rooms[roomId]);
-    if (players.length === 2) io.to(roomId).emit("gameStart", { roomId, players });
-  });
+		if (!room) {
+			return;
+		}
 
-  socket.on("playerMove", ({ roomId, move }) => {
-    socket.to(roomId).emit("opponentMove", move);
-  });
+		const playersArray = Object.values(room.players).map((player) => {
+			return {
+				id: player.id,
+				isHost: player.isHost
+			};
+		});
 
-  socket.on("disconnect", () => {
-    for (const roomId in rooms) {
-      if (rooms[roomId][socket.id]) {
-        delete rooms[roomId][socket.id];
-        if (Object.keys(rooms[roomId]).length === 0) delete rooms[roomId];
-      }
-    }
-  });
+		io.to(roomId).emit("lobbyState", {
+			roomId: roomId,
+			settings: room.settings,
+			players: playersArray
+		});
+	}
+
+	socket.on("joinRoom", ({ roomId, isHost }) => {
+		if (!roomId) {
+			return;
+		}
+
+		const upperRoomId = roomId.toUpperCase();
+
+		if (isHost) {
+			if (!rooms[roomId]) {
+				rooms[upperRoomId] = {
+					settings: { ...DEFAULT_SETTINGS },
+					players: {}
+				};
+			}
+		} else {
+			if (!rooms[upperRoomId]) {
+				socket.emit("joinError", { message: "Lobby not found" });
+				return;
+			}
+		}
+
+		const room = rooms[upperRoomId];
+
+		const playerIds = Object.keys(room.players);
+		const playerCount = playerIds.length;
+
+		if (!room.players[socket.id] && playerCount >= 2) {
+			socket.emit("joinError", { message: "Lobby is full" });
+			return;
+		}
+
+		room.players[socket.id] = {
+			id: socket.id,
+			isHost: isHost === true
+		};
+
+		socket.join(upperRoomId);
+		console.log(`Socket ${socket.id} joined room ${upperRoomId} (host: ${!!isHost})`);
+
+		sendLobbyState(upperRoomId);
+	});
+
+	socket.on("updateSettings", ({ roomId, settings }) => {
+		if (!roomId) {
+			return;
+		}
+
+		const upperRoomId = roomId.toUpperCase();
+		const room = rooms[upperRoomId];
+
+		if (!room) {
+			return;
+		}
+
+		room.settings = { ...room.settings, ...settings };
+
+		sendLobbyState(upperRoomId);
+	});
+
+	socket.on("startGame", ({ roomId, settings }) => {
+		if (!roomId) {
+			return;
+		}
+
+		const upperRoomId = roomId.toUpperCase();
+		const room = rooms[upperRoomId];
+
+		if (!room) {
+			return;
+		}
+
+		if (settings) {
+			room.settings = { ...room.settings, ...settings };
+		}
+
+		console.log(`Game started in room ${upperRoomId}`);
+
+		io.to(upperRoomId).emit("gameStarted", {
+			roomId: upperRoomId,
+			settings: room.settings
+		});
+	});
+
+	socket.on("leaveRoom", ({ roomId }) => {
+		if (!roomId) {
+			return;
+		}
+
+		const upperRoomId = roomId.toUpperCase();
+		const room = rooms[upperRoomId];
+
+		if (!room) {
+			return;
+		}
+
+		if (room.players[socket.id]) {
+			delete room.players[socket.id];
+			socket.leave(upperRoomId);
+			console.log(`Socket ${socket.id} left room ${upperRoomId}`);
+
+			const remainingPlayerIds = Object.keys(room.players);
+
+			if (remainingPlayerIds.length === 0) {
+				delete rooms[upperRoomId];
+				console.log(`Room ${upperRoomId} deleted (empty)`);
+			} else {
+				sendLobbyState(upperRoomId);
+			}
+		}
+	});
+
+	socket.on("playerMove", ({ roomId, move }) => {
+		if (!roomId) {
+			return;
+		}
+
+		const upperRoomId = roomId.toUpperCase();
+		socket.to(upperRoomId).emit("opponentMove", move);
+	});
+
+	socket.on("disconnect", () => {
+		console.log(`Socket disconnected: ${socket.id}`);
+
+		for (const roomId in rooms) {
+			const room = rooms[roomId];
+
+			if (!room) {
+				continue;
+			}
+
+			if (!room.players[socket.id]) {
+				continue;
+			}
+
+			delete room.players[socket.id];
+			socket.leave(roomId);
+
+			const remainingPlayerIds = Object.keys(room.players);
+
+			if (remainingPlayerIds.length === 0) {
+				delete rooms[roomId];
+				console.log(`Room ${roomId} deleted (empty after disconnect)`);
+			} else {
+				sendLobbyState(roomId);
+			}
+		}
+	});
 });
 
-
 server.listen(PORT, host, () => {
-  console.log(`LISTENING https://${host}:${PORT}`);
+	console.log(`LISTENING https://${host}:${PORT}`);
 });
