@@ -1,0 +1,120 @@
+.lobbyContainer {
+	width: 900px;
+	height: 580px;
+	margin: 20px auto;
+	border: 1px solid #ccc;
+	border-radius: 6px;
+	display: flex;
+	flex-direction: column;
+	background: #1f2937;
+	color: #ffffff;
+	box-sizing: border-box;
+	padding: 20px;
+}
+
+.lobbyHeader {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 16px;
+}
+
+.lobbyTitle {
+	margin: 0;
+	font-size: 1.4rem;
+}
+
+.lobbyCode {
+	font-size: 0.95rem;
+	letter-spacing: 0.08em;
+}
+
+.lobbyMain {
+	display: flex;
+	flex: 1;
+	gap: 24px;
+}
+
+.lobbyColumn {
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+.lobbyColumn--players {
+	border-right: 1px solid #374151;
+	padding-right: 16px;
+}
+
+.lobbySubTitle {
+	margin: 0;
+	font-size: 1.5rem;
+}
+
+.lobbyPlayersBox {
+	margin-top: 8px;
+	background: #111827;
+	border-radius: 4px;
+	padding: 8px;
+	font-size: 0.9rem;
+}
+
+.lobbyPlayersEmpty {
+	opacity: 0.7;
+}
+
+.lobbyPlayerRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 4px 0;
+	border-bottom: 1px solid rgba(55, 65, 81, 0.6);
+}
+
+.lobbyPlayerId {
+	font-family: monospace;
+}
+
+.lobbyPlayerFlags {
+	margin-left: 4px;
+	font-size: 0.85rem;
+	color: #d1d5db;
+}
+
+.lobbyColumn--options {
+	padding-left: 16px;
+}
+
+.lobbyOptionRow {
+	margin-top: 8px;
+}
+
+.lobbyNote {
+	margin-top: 12px;
+	font-size: 0.8rem;
+	opacity: 0.8;
+}
+
+.lobbyButtonRow {
+	display: flex;
+	justify-content: space-between;
+	margin-top: 16px;
+}
+
+.lobbyButton {
+	padding: 8px 16px;
+	border-radius: 4px;
+	border: none;
+	cursor: pointer;
+	font-size: 0.95rem;
+}
+
+.lobbyButton--primary {
+	background-color: #0d6efd;
+	color: #ffffff;
+}
+
+.lobbyButton--secondary {
+	background-color: #4b5563;
+	color: #ffffff;
+}
