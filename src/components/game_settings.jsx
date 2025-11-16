@@ -1,88 +1,66 @@
 import { useState } from "react";
+
 import "../Pages-style/game_settings.css"
 
-export default function GameSettings({ onStart }) {
-	const [matchDuration, setMatchDuration] = useState(180)
-	const [goalLimit, setGoalLimit] = useState(5)
-	const [roomIdInput, setRoomIdInput] = useState("");
-  	const [isJoining, setIsJoining] = useState(false);
+export default function GameSettings({ onHost, onJoin }) {
+	const [roomCode, setRoomCode] = useState("");
 
-	const handleStartGame = async () => {
+	const handleHostClick = async () => {
 		try {
-			let roomId;
-
-			if (isJoining && roomIdInput.trim() !== "") {
-				roomId = roomIdInput.trim().toUpperCase();
-			} else {
-				const res = await fetch("https://soccer-super-stars.fly.dev/create", {
+			const res = await fetch("https://soccer-super-stars.fly.dev/create", {
 				method: "POST"
-				});
-				const data = await res.json();
-				roomId = data.roomId;
+			});
+			const data = await res.json();
+			if (!data.roomId) {
+                console.error("No roomId returned from /create");
+				return;
 			}
-
-		onStart({ matchDurationSec: matchDuration, goalLimit, roomId });
+			onHost(data.roomId.toUpperCase());
 		} catch (err) {
-		console.error("Failed to start/join game room:", err);
+			console.error("Failed to create lobby:", err);
+			alert("Could not create lobby, please try again.");
 		}
+	};
+
+	const handleJoinClick = () => {
+		const trimmed = roomCode.trim().toUpperCase();
+		if (!trimmed) {
+			alert("Enter a lobby code first.");
+			return;
+		}
+		onJoin(trimmed);
 	};
 
 	return (
 		<div className="settingsBox">
-			<h3 className="settingsTitle">Game Settings</h3>
-
-			<div>
-				<div className="settingsLabel">Match Duration</div>
-				<select
-					value={matchDuration}
-					onChange={(e) => setMatchDuration(Number(e.target.value))}
-					className="settingsSelect"
-				>
-					<option value={60}>1 minute</option>
-					<option value={120}>2 minutes</option>
-					<option value={180}>3 minutes</option>
-					<option value={300}>5 minutes</option>
-				</select>
-			</div>
+			<h3 className="settingsLabel">Create a Lobby</h3>
 
 			<div className="settingsGroup">
-				<div className="settingsLabel">Goals to Score</div>
-				<select
-					value={goalLimit}
-					onChange={(e) => setGoalLimit(Number(e.target.value))}
-					className="settingsSelect"
+				<button
+					className="settingsButton"
+					onClick={handleHostClick}
 				>
-					<option value={3}>3 Goals</option>
-					<option value={5}>5 Goals</option>
-					<option value={7}>7 Goals</option>
-					<option value={10}>10 Goals</option>
-				</select>
+					Host Game
+				</button>
 			</div>
 
-			<div className="settingsGroup">
-			<label>
-			<input
-				type="checkbox"
-				checked={isJoining}
-				onChange={() => setIsJoining(!isJoining)}
-			/>{" "}
-			Join Existing Room
-			</label>
-
-			{isJoining && (
-			<input
-				type="text"
-				placeholder="Enter Room ID"
-				value={roomIdInput}
-				onChange={(e) => setRoomIdInput(e.target.value)}
-				className="settingsInput"
-			/>
-			)}
-		</div>
-
-		<button onClick={handleStartGame} className="settingsButton">
-			{isJoining ? "Join Game" : "Start Game"}
-		</button>
+			<div className="settingsGroup" style={{ marginTop: 24 }}>
+				<h3 className="settingsLabel">Join a Lobby</h3>
+				<input
+					type="text"
+					placeholder="Enter Lobby Code"
+					value={roomCode}
+					onChange={(e) => setRoomCode(e.target.value)}
+					className="settingsInput"
+				/>
+				<button
+					className="settingsButton"
+					style={{ marginTop: 12 }}
+					onClick={handleJoinClick}
+				>
+					Join Game
+				</button>
+			</div>
 		</div>
 	);
 }
