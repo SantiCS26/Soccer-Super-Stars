@@ -16,6 +16,15 @@ export default function Register() {
 			return;   
 		}
 
+		if (password.length < 12) {
+			alert("Password must be at least 12 characters long.");
+			return;
+		} else if ((!/[A-Z]/.test(password)) && (!/[a-z]/.test(password)) && (!/[0-9]/.test(password)) && (!/[!@#$%^&*]/.test(password))) {
+			alert("Password must contain at least one uppercase, lowercase letter, number and special symbol.");
+			return;
+		}
+
+
 		console.log("THIS IS THE BODY: ", JSON.stringify({ username, password }));
 		try {
 			const API_BASE_URL = import.meta.env.VITE_API_URL;
