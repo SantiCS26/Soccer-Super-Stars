@@ -59,9 +59,16 @@ app.use(express.json());
 
 const pool = new Pool(databaseConfig);
 
-pool.connect().then(() => {
-	console.log("Connected to db");
-});
+(async () => {
+    try {
+        await pool.query("SELECT NOW()");
+        console.log("Database connection verified.");
+    } catch (err) {
+        console.error("Database connection failed:", err);
+        process.exit(1);
+    }
+})();
+
 
 function generateRoomCode() {
 	let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
