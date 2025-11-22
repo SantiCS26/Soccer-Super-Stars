@@ -28,11 +28,6 @@ const DEFAULT_SETTINGS = {
 	goalLimit: 5
 };
 
-const DEFAULT_SETTINGS = {
-	matchDurationSec: 180,
-	goalLimit: 5
-};
-
 if (process.env.FLY_APP_NAME) {
 	host = "0.0.0.0";
 	databaseConfig = { connectionString: process.env.DATABASE_URL };
