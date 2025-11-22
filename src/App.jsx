@@ -13,8 +13,6 @@ function App() {
 		<Router>
 			<Dashboard />
 			<Routes>
-				<Route path="/" element={<Login />} />
-				<Route path="/register" element={<Register />} />
 				<Route path="/home" element={<Home />} />
 				<Route path="/game" element={<Game />} />
 				<Route path="/leaderboard" element={<Leaderboard />} />
