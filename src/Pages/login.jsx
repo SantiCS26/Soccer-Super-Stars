@@ -46,6 +46,15 @@ export default function Login() {
 				>
 					Login
 				</button>
+
+				<button
+					type="button"
+					onClick={() => navigate("/home")}
+					className="w-full bg-gray-500 text-white py-2 rounded-lg mt-3 hover:bg-gray-600 transition"
+				>
+					Continue as Guest
+				</button>
+
 			</form>
 
 			<p className="text-sm text-center text-gray-600 mt-4">
