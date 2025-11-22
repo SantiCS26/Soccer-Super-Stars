@@ -1,6 +1,10 @@
+import { useEffect, useState } from "react";
+import LoginWindow from "../components/login_window";
 import { NavLink, useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
+	const [isLoggedIn, setIsLoggedIn] = useState(false);
+	const [showLogin, setShowLogin] = useState(false);
 	const navigate = useNavigate();
 	const navLinkStyle = {
 		color: "white",
@@ -28,14 +32,37 @@ export default function Dashboard() {
 		backgroundColor: "#1f2937",
 		display: "flex",
 		justifyContent: "center",
-		gap: "16px",
-		padding: "10px 0"
+		alignItems: "center",
+        gap: "16px",
+        padding: "10px 0",
+        zIndex: 40
 	}
 
 	const navLinksContainerStyle = {
 		display: "flex",
 		gap: "16px"
 	};
+
+	useEffect(() => {
+        const checkLogin = async () => {
+            try {
+                const API_BASE_URL = import.meta.env.VITE_API_URL;
+
+                const res = await fetch(`${API_BASE_URL}/api/validate-token`, {
+                    method: "GET",
+                    credentials: "include",
+                });
+
+                const data = await res.json();
+                setIsLoggedIn(data.valid === true);
+            } catch (err) {
+                console.error("Login check failed:", err);
+                setIsLoggedIn(false);
+            }
+        };
+
+        checkLogin();
+    }, []);
 
 	const handleLogout = async () => {
 		try {
@@ -46,7 +73,8 @@ export default function Dashboard() {
 			});
 
 			if (response.ok) {
-				navigate("/"); 
+				navigate("/");
+				setIsLoggedIn(false); 
 			} else {
 				alert("Logout failed");
 			}
@@ -57,38 +85,69 @@ export default function Dashboard() {
 	};
 
 	return (
-		<nav style={navBarStyle}>
-			<div style={navLinksContainerStyle}>
-				<NavLink to="/home" style={({ isActive }) => getNavLinkStyle(isActive)}>
-					Home
-				</NavLink>
+		<>
+			<nav style={navBarStyle}>
+				{isLoggedIn ? (
+					<>
+						<div style={{ display: "flex", gap: "16px" }}>
+							<NavLink to="/" style={({ isActive }) => getNavLinkStyle(isActive)}>
+								Home
+							</NavLink>
 
-				<NavLink to="/game" style={({ isActive }) => getNavLinkStyle(isActive)}>
-					Play Game
-				</NavLink>
+							<NavLink to="/game" style={({ isActive }) => getNavLinkStyle(isActive)}>
+								Play Game
+							</NavLink>
 
-				<NavLink to="/leaderboard" style={({ isActive }) => getNavLinkStyle(isActive)}>
-					Leaderboard
-				</NavLink>
+							<NavLink to="/leaderboard" style={({ isActive }) => getNavLinkStyle(isActive)}>
+								Leaderboard
+							</NavLink>
 
-				<NavLink to="/profile" style={({ isActive }) => getNavLinkStyle(isActive)}>
-					My Profile
-				</NavLink>
-			</div>
+							<NavLink to="/profile" style={({ isActive }) => getNavLinkStyle(isActive)}>
+								My Profile
+							</NavLink>
+						</div>
 
-			<button
-				onClick={handleLogout}
-				style={{
-					color: "white",
-					backgroundColor: "#dc2626",
-					padding: "6px 12px",
-					borderRadius: "4px",
-					border: "none",
-					cursor: "pointer"
-				}}
-			>
-				Logout
-			</button>
-		</nav>
-	)
+						<button
+							onClick={handleLogout}
+							style={{
+								color: "white",
+								backgroundColor: "#dc2626",
+								padding: "6px 12px",
+								borderRadius: "4px",
+								border: "none",
+								cursor: "pointer",
+								marginLeft: "12px"
+							}}
+						>
+							Logout
+						</button>
+				</>
+			) : (
+				<>
+					<button
+						onClick={() => setShowLogin(true)}
+						style={{
+							color: "white",
+							backgroundColor: "#2563eb",
+							padding: "8px 16px",
+							borderRadius: "6px",
+							border: "none",
+							cursor: "pointer",
+							fontSize: "16px"
+						}}
+					>
+						Login
+					</button>
+				</>
+				)}
+			</nav>
+
+			{showLogin && (
+				<LoginWindow
+					onClose={() => setShowLogin(false)}
+					onSuccess={() => setIsLoggedIn(true)}
+				/>
+			)}
+		</>
+	);
 }

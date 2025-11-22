@@ -25,9 +25,8 @@ function App() {
 		<Router>
 			<Layout>
 				<Routes>
-					<Route path="/" element={<Login />} />
+					<Route path="/" element={<Home />} />
 					<Route path="/register" element={<Register />} />
-					<Route path="/home" element={<Home />} />
 					<Route path="/game" element={<Game />} />
 					<Route path="/leaderboard" element={<Leaderboard />} />
 					<Route path="/profile" element={<Profile />} />
