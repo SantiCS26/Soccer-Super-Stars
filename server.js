@@ -177,7 +177,7 @@ let authorize = (req, res, next) => {
   next();
 };
 
-app.post("/logout", (req, res) => {
+app.post("/api/logout", (req, res) => {
 	const { token } = req.cookies;
 
 	if (!token || !tokenStorage[token]) {

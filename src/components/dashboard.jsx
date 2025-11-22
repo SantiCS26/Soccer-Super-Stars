@@ -40,7 +40,7 @@ export default function Dashboard() {
 	const handleLogout = async () => {
 		try {
 			const API_BASE_URL = import.meta.env.VITE_API_URL;
-			const response = await fetch(`${API_BASE_URL}/logout`, {
+			const response = await fetch(`${API_BASE_URL}/api/logout`, {
 				method: "POST",
 				credentials: "include" 
 			});
