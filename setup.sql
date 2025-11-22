@@ -8,13 +8,15 @@ DROP TABLE IF EXISTS users;
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL
+    password TEXT NOT NULL,
+    score INT DEFAULT 0
 );
 
 -- Insert some dummy users
-INSERT INTO users (username, password) VALUES ('alice@example.com', 'password123');
-INSERT INTO users (username, password) VALUES ('bob@example.com', 'mypassword');
-INSERT INTO users (username, password) VALUES ('charlie@example.com', 'secretpass');
+INSERT INTO users (username, password) VALUES ('test', 'pass');
+INSERT INTO users (username, password) VALUES ('test2', 'pass2');
+INSERT INTO users (username, password) VALUES ('test3', 'pass3');
+INSERT INTO users (username, password) VALUES ('test4', 'pass4');
 
 SELECT * FROM users;
 

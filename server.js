@@ -7,6 +7,8 @@ import path from "path";
 import { fileURLToPath } from "url";
 import http from "http";
 import { Server } from "socket.io";
+import crypto from "crypto";
+import cookieParser from "cookie-parser";
 
 
 dotenv.config();
@@ -15,10 +17,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PORT = process.env.PORT || 3000;
-const { Pool } = pkg;
+const { Pool } = pkg; 
 let host;
 let databaseConfig;
 let rooms = {};
+let tokenStorage = {};
+
+const DEFAULT_SETTINGS = {
+	matchDurationSec: 180,
+	goalLimit: 5
+};
 
 const DEFAULT_SETTINGS = {
 	matchDurationSec: 180,
@@ -42,6 +50,7 @@ if (process.env.FLY_APP_NAME) {
 
 
 let app = express();
+
 const server = http.createServer(app);
 const io = new Server(server, {
 	cors: {
@@ -53,15 +62,35 @@ const io = new Server(server, {
 app.use(cors({
 	origin: ["http://localhost:5173", "https://soccer-super-stars.fly.dev"],
 	methods: ["GET","POST","OPTIONS"],
-	allowedHeaders: ["Content-Type"]
+	allowedHeaders: ["Content-Type"],
+  credentials: true
 }));
+app.use(cookieParser());
 app.use(express.json());
 
 const pool = new Pool(databaseConfig);
 
-pool.connect().then(() => {
-	console.log("Connected to db");
-});
+(async () => {
+    try {
+        await pool.query("SELECT NOW()");
+        console.log("Database connection verified.");
+    } catch (err) {
+        console.error("Database connection failed:", err);
+        process.exit(1);
+    }
+})();
+
+function makeToken() {
+  return crypto.randomBytes(32).toString("hex");
+}
+
+
+let cookieOptions = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+};
+
 
 function generateRoomCode() {
 	let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -81,6 +110,22 @@ function printRooms() {
 		}
 	}
 }
+
+app.get("/api/leaderboard", async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT username, score
+            FROM users
+            ORDER BY score DESC
+            LIMIT 50
+        `);
+
+        return res.json({ players: result.rows });
+    } catch (err) {
+        console.error("Leaderboard error:", err);
+        return res.status(500).json({ message: "Server error loading leaderboard" });
+    }
+});
 
 app.post("/create", (req, res) => {
 	const roomId = generateRoomCode();
@@ -102,7 +147,11 @@ app.post("/api/register", async (req, res) => {
 		const hashed = await bcrypt.hash(password, 10);
 		await pool.query("INSERT INTO users (username, password) VALUES ($1, $2)", [username, hashed]);
 
-		return res.status(201).json({ message: "User registered successfully" });
+    const token = makeToken();
+    tokenStorage[token] = username;
+
+		res.cookie("token", token, cookieOptions);
+    return res.status(201).json({ message: "User registered & logged in" });
 	} catch (err) {
 		console.error("Registration error:", err);
 		return res.status(500).json({ message: "Server error" });
@@ -125,12 +174,48 @@ app.post("/api/login", async (req, res) => {
 			return res.status(401).json({ message: "Invalid username or password" });
 		}
 
-		return res.json({ message: "Login successful", user: { username: user.username } });
+		let token = makeToken();
+    tokenStorage[token] = username;
+
+    res.cookie("token", token, cookieOptions);
+    return res.status(200).json({
+      message: "Login successful",
+      user: { username: user.username }
+    });
 	} catch (err) {
 		console.error("Login error:", err);
 		return res.status(500).json({ message: "Server error" });
 	}
 });
+
+let authorize = (req, res, next) => {
+  let { token } = req.cookies;
+  console.log(token, tokenStorage);
+  if (token === undefined || !tokenStorage.hasOwnProperty(token)) {
+    return res.sendStatus(403); // TODO
+  }
+  next();
+};
+
+app.post("/api/logout", (req, res) => {
+	const { token } = req.cookies;
+
+	if (!token || !tokenStorage[token]) {
+		return res.sendStatus(400);
+	}
+
+	delete tokenStorage[token];
+	res.cookie("token", "", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    expires: new Date(0)
+  });
+  return res.sendStatus(200);
+});
+
+app.get("/public", (req, res) => res.send("THIS IS PUBLIC\n"));
+app.get("/private", authorize, (req, res) => res.send("THIS IS PRIVATE\n"));
 
 app.use(express.static(path.join(__dirname, "dist")));
 
@@ -180,7 +265,6 @@ io.on("connection", (socket) => {
 		}
 
 		const room = rooms[upperRoomId];
-
 		const playerIds = Object.keys(room.players);
 		const playerCount = playerIds.length;
 

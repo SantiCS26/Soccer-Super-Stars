@@ -1,6 +1,7 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
+	const navigate = useNavigate();
 	const navLinkStyle = {
 		color: "white",
 		padding: "6px 12px",
@@ -31,23 +32,63 @@ export default function Dashboard() {
 		padding: "10px 0"
 	}
 
+	const navLinksContainerStyle = {
+		display: "flex",
+		gap: "16px"
+	};
+
+	const handleLogout = async () => {
+		try {
+			const API_BASE_URL = import.meta.env.VITE_API_URL;
+			const response = await fetch(`${API_BASE_URL}/api/logout`, {
+				method: "POST",
+				credentials: "include" 
+			});
+
+			if (response.ok) {
+				navigate("/"); 
+			} else {
+				alert("Logout failed");
+			}
+		} catch (err) {
+			console.error("Logout error:", err);
+			alert("Server error during logout");
+		}
+	};
+
 	return (
 		<nav style={navBarStyle}>
-			<NavLink to="/home" style={({ isActive }) => getNavLinkStyle(isActive)}>
-				Home
-			</NavLink>
+			<div style={navLinksContainerStyle}>
+				<NavLink to="/home" style={({ isActive }) => getNavLinkStyle(isActive)}>
+					Home
+				</NavLink>
 
-			<NavLink to="/game" style={({ isActive }) => getNavLinkStyle(isActive)}>
-				Play Game
-			</NavLink>
+				<NavLink to="/game" style={({ isActive }) => getNavLinkStyle(isActive)}>
+					Play Game
+				</NavLink>
 
-			<NavLink to="/leaderboard" style={({ isActive }) => getNavLinkStyle(isActive)}>
-				Leaderboard
-			</NavLink>
+				<NavLink to="/leaderboard" style={({ isActive }) => getNavLinkStyle(isActive)}>
+					Leaderboard
+				</NavLink>
 
-			<NavLink to="/profile" style={({ isActive }) => getNavLinkStyle(isActive)}>
-				My Profile
-			</NavLink>
+				<NavLink to="/profile" style={({ isActive }) => getNavLinkStyle(isActive)}>
+					My Profile
+				</NavLink>
+			</div>
+
+			<button
+				onClick={handleLogout}
+				style={{
+					color: "white",
+					backgroundColor: "#dc2626",
+					padding: "6px 12px",
+					borderRadius: "4px",
+					border: "none",
+					cursor: "pointer"
+				}}
+			>
+				Logout
+			</button>
 		</nav>
 	)
 }
