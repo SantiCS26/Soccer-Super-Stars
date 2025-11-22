@@ -145,10 +145,8 @@ app.post("/api/register", async (req, res) => {
     const token = makeToken();
     tokenStorage[token] = username;
 
-		return res
-      .cookie("token", token, cookieOptions)
-      .status(201)
-      .json({ message: "User registered & logged in" });
+		res.cookie("token", token, cookieOptions);
+    return res.status(201).json({ message: "User registered & logged in" });
 	} catch (err) {
 		console.error("Registration error:", err);
 		return res.status(500).json({ message: "Server error" });
@@ -174,10 +172,11 @@ app.post("/api/login", async (req, res) => {
 		let token = makeToken();
     tokenStorage[token] = username;
 
-    return res
-      .json({ message: "Login successful", user: { username: user.username } })
-      .cookie("token", token, cookieOptions)
-      .send();
+    res.cookie("token", token, cookieOptions);
+    return res.status(200).json({
+      message: "Login successful",
+      user: { username: user.username }
+    });
 	} catch (err) {
 		console.error("Login error:", err);
 		return res.status(500).json({ message: "Server error" });
