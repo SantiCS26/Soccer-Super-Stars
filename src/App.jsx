@@ -10,7 +10,7 @@ import Register from "./Pages/register.jsx";
 
 function Layout({ children }) {
 	const location = useLocation();
-	const hideDashboard = location.pathname === "/" || location.pathname === "/register";
+	const hideDashboard = location.pathname === "/register";
 
 	return (
 		<>
