@@ -7,6 +7,9 @@ import path from "path";
 import { fileURLToPath } from "url";
 import http from "http";
 import { Server } from "socket.io";
+import crypto from "crypto";
+import argon2 from "argon2";
+import cookieParser from "cookie-parser";
 
 
 dotenv.config();
@@ -15,10 +18,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PORT = process.env.PORT || 3000;
-const { Pool } = pkg;
+const { Pool } = pkg; 
 let host;
 let databaseConfig;
 let rooms = {};
+let tokenStorage = {};
 
 const DEFAULT_SETTINGS = {
 	matchDurationSec: 180,
@@ -42,6 +46,8 @@ if (process.env.FLY_APP_NAME) {
 
 
 let app = express();
+app.use(cookieParser());
+
 const server = http.createServer(app);
 const io = new Server(server, {
 	cors: {
@@ -68,6 +74,16 @@ const pool = new Pool(databaseConfig);
         process.exit(1);
     }
 })();
+
+function makeToken() {
+    return crypto.randomBytes(32).toString("hex");
+}
+
+let cookieOptions = {
+    httpOnly: true,
+    secure: true,
+    sameSite: "strict",
+};
 
 
 function generateRoomCode() {
@@ -187,7 +203,6 @@ io.on("connection", (socket) => {
 		}
 
 		const room = rooms[upperRoomId];
-
 		const playerIds = Object.keys(room.players);
 		const playerCount = playerIds.length;
 
