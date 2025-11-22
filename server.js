@@ -45,7 +45,6 @@ if (process.env.FLY_APP_NAME) {
 
 
 let app = express();
-app.use(cookieParser());
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -61,6 +60,7 @@ app.use(cors({
 	allowedHeaders: ["Content-Type"],
   credentials: true
 }));
+app.use(cookieParser());
 app.use(express.json());
 
 const pool = new Pool(databaseConfig);
@@ -200,7 +200,13 @@ app.post("/api/logout", (req, res) => {
 	}
 
 	delete tokenStorage[token];
-	return res.clearCookie("token", cookieOptions).send();
+	res.cookie("token", "", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+    expires: new Date(0)
+  });
+  return res.sendStatus(200);
 });
 
 app.get("/public", (req, res) => res.send("THIS IS PUBLIC\n"));
