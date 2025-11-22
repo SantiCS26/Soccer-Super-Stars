@@ -8,7 +8,6 @@ import { fileURLToPath } from "url";
 import http from "http";
 import { Server } from "socket.io";
 import crypto from "crypto";
-import argon2 from "argon2";
 import cookieParser from "cookie-parser";
 
 
@@ -76,8 +75,9 @@ const pool = new Pool(databaseConfig);
 })();
 
 function makeToken() {
-    return crypto.randomBytes(32).toString("hex");
+  return crypto.randomBytes(32).toString("hex");
 }
+
 
 let cookieOptions = {
     httpOnly: true,
@@ -125,7 +125,13 @@ app.post("/api/register", async (req, res) => {
 		const hashed = await bcrypt.hash(password, 10);
 		await pool.query("INSERT INTO users (username, password) VALUES ($1, $2)", [username, hashed]);
 
-		return res.status(201).json({ message: "User registered successfully" });
+    const token = makeToken();
+    tokenStorage[token] = username;
+
+		return res
+      .cookie("token", token, cookieOptions)
+      .status(201)
+      .json({ message: "User registered & logged in" });
 	} catch (err) {
 		console.error("Registration error:", err);
 		return res.status(500).json({ message: "Server error" });
@@ -148,12 +154,41 @@ app.post("/api/login", async (req, res) => {
 			return res.status(401).json({ message: "Invalid username or password" });
 		}
 
-		return res.json({ message: "Login successful", user: { username: user.username } });
+		let token = makeToken();
+    tokenStorage[token] = username;
+
+    return res
+      .json({ message: "Login successful", user: { username: user.username } })
+      .cookie("token", token, cookieOptions)
+      .send();
 	} catch (err) {
 		console.error("Login error:", err);
 		return res.status(500).json({ message: "Server error" });
 	}
 });
+
+let authorize = (req, res, next) => {
+  let { token } = req.cookies;
+  console.log(token, tokenStorage);
+  if (token === undefined || !tokenStorage.hasOwnProperty(token)) {
+    return res.sendStatus(403); // TODO
+  }
+  next();
+};
+
+app.post("/logout", (req, res) => {
+	const { token } = req.cookies;
+
+	if (!token || !tokenStorage[token]) {
+		return res.sendStatus(400);
+	}
+
+	delete tokenStorage[token];
+	return res.clearCookie("token", cookieOptions).send();
+});
+
+app.get("/public", (req, res) => res.send("THIS IS PUBLIC\n"));
+app.get("/private", authorize, (req, res) => res.send("THIS IS PRIVATE\n"));
 
 app.use(express.static(path.join(__dirname, "dist")));
 
