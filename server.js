@@ -106,6 +106,22 @@ function printRooms() {
 	}
 }
 
+app.get("/api/leaderboard", async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT username, score
+            FROM users
+            ORDER BY score DESC
+            LIMIT 50
+        `);
+
+        return res.json({ players: result.rows });
+    } catch (err) {
+        console.error("Leaderboard error:", err);
+        return res.status(500).json({ message: "Server error loading leaderboard" });
+    }
+});
+
 app.post("/create", (req, res) => {
 	const roomId = generateRoomCode();
 	return res.json({ roomId });
