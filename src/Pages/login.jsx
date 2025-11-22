@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Input from "../components/input";
 
 export default function Login() {
 	const [username, setusername] = useState("");
 	const [password, setPassword] = useState("");
+	const navigate = useNavigate();
 
 	const handleLogin = async (e) => {
 	e.preventDefault();
@@ -21,7 +22,7 @@ export default function Login() {
 		const data = await response.json();
 		if (response.ok) {
 			alert("Login successful!");
-			console.log("User:", data.username);
+			navigate("/home");
 		} else {
 			alert(data.message);
 		}
