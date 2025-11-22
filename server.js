@@ -83,7 +83,7 @@ function makeToken() {
 let cookieOptions = {
     httpOnly: true,
     secure: true,
-    sameSite: "strict",
+    sameSite: "none",
 };
 
 
