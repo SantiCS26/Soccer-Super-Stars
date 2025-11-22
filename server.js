@@ -58,7 +58,8 @@ const io = new Server(server, {
 app.use(cors({
 	origin: ["http://localhost:5173", "https://soccer-super-stars.fly.dev"],
 	methods: ["GET","POST","OPTIONS"],
-	allowedHeaders: ["Content-Type"]
+	allowedHeaders: ["Content-Type"],
+  credentials: true
 }));
 app.use(express.json());
 
