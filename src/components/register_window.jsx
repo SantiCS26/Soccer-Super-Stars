@@ -1,32 +1,47 @@
 import { useState } from "react";
 import Input from "./input";
 
-export default function LoginWindow({ onClose, onSuccess }) {
+export default function RegisterWindow({ onClose, onSwitchToLogin }) {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
 
-    const handleLogin = async (e) => {
+    const handleRegister = async (e) => {
         e.preventDefault();
+
+        if (password !== confirmPassword) {
+            alert("Passwords do not match.");
+            return;
+        }
+
+        if (password.length < 12) {
+            alert("Password must be at least 12 characters long.");
+            return;
+        } else if ((!/[A-Z]/.test(password)) && (!/[a-z]/.test(password)) && (!/[0-9]/.test(password)) && (!/[!@#$%^&*]/.test(password))) {
+            alert("Password must contain at least one uppercase, lowercase letter, number and special symbol.");
+            return;
+        }
+
         try {
             const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-            const response = await fetch(`${API_BASE_URL}/api/login`, {
+            const response = await fetch(`${API_BASE_URL}/api/register`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username, password }),
-                credentials: "include",
             });
 
             const data = await response.json();
 
             if (response.ok) {
-                onSuccess();   
-                onClose();
+                alert("Registration successful! Please log in.");
+                onSwitchToLogin();
             } else {
-                alert(data.message);
+                alert(data.message || "Registration failed.");
             }
         } catch (error) {
-            console.error("Login error:", error);
+            console.error("Error registering user:", error);
+            alert("Server error. Please try again later.");
         }
     };
 
@@ -58,17 +73,17 @@ export default function LoginWindow({ onClose, onSuccess }) {
     return (
         <div style={overlayStyle}>
             <div style={windowStyle}>
-                <h2 className="text-2xl font-semibold text-center mb-6">Login</h2>
-
-                <form onSubmit={handleLogin}>
+                <h2 className="text-2xl font-semibold text-center mb-6">Create Account</h2>
+                <form onSubmit={handleRegister}>
                     <Input label="Username" value={username} onChange={(e) => setUsername(e.target.value)} />
                     <Input label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <Input label="Confirm Password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
 
                     <button
                         type="submit"
-                        className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
+                        className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition"
                     >
-                        Login
+                        Register
                     </button>
 
                     <button
@@ -79,22 +94,14 @@ export default function LoginWindow({ onClose, onSuccess }) {
                         Cancel
                     </button>
 
-                    <button
-                        type="button"
-                        onClick={() => { onClose(); onSuccess("guest"); }}
-                        className="w-full bg-gray-700 text-white py-2 rounded-lg mt-3 hover:bg-gray-800 transition"
-                    >
-                        Continue as Guest
-                    </button>
-
                     <div className="text-sm text-center text-gray-600 mt-4">
-                        Need to create an account?{" "}
+                        Already have an account?{" "}
                         <button
                             type="button"
-                            onClick={onSwitchToRegister}
+                            onClick={onSwitchToLogin}
                             className="text-blue-600 hover:underline font-medium"
                         >
-                            Register here
+                            Login here
                         </button>
                     </div>
                 </form>
