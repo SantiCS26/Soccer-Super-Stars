@@ -127,6 +127,19 @@ app.post("/create", (req, res) => {
 	return res.json({ roomId });
 });
 
+app.get("/api/validate-token", (req, res) => {
+    const { token } = req.cookies;
+
+    if (token && tokenStorage[token]) {
+        return res.json({ 
+            valid: true, 
+            username: tokenStorage[token] 
+        });
+    }
+
+    return res.json({ valid: false });
+});
+
 app.post("/api/register", async (req, res) => {
 	const { username, password } = req.body;
 
