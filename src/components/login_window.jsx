@@ -44,7 +44,7 @@ export default function LoginWindow({ onClose, onSuccess }) {
     };
 
     const windowStyle = {
-        backgroundColor: "white",
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
         padding: "2rem",
         borderRadius: "1rem",
         boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
