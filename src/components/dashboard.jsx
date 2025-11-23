@@ -87,25 +87,28 @@ export default function Dashboard() {
 	return (
 		<>
 			<nav style={navBarStyle}>
-				{isLoggedIn ? (
-					<>
-						<div style={{ display: "flex", gap: "16px" }}>
-							<NavLink to="/" style={({ isActive }) => getNavLinkStyle(isActive)}>
-								Home
-							</NavLink>
+				<div style={navLinksContainerStyle}>
+					<NavLink to="/" style={({ isActive }) => getNavLinkStyle(isActive)}>
+						Home
+					</NavLink>
 
-							<NavLink to="/game" style={({ isActive }) => getNavLinkStyle(isActive)}>
-								Play Game
-							</NavLink>
+					<NavLink to="/game" style={({ isActive }) => getNavLinkStyle(isActive)}>
+						Play Game
+					</NavLink>
 
-							<NavLink to="/leaderboard" style={({ isActive }) => getNavLinkStyle(isActive)}>
-								Leaderboard
-							</NavLink>
+					<NavLink to="/leaderboard" style={({ isActive }) => getNavLinkStyle(isActive)}>
+						Leaderboard
+					</NavLink>
 
-							<NavLink to="/profile" style={({ isActive }) => getNavLinkStyle(isActive)}>
-								My Profile
-							</NavLink>
-						</div>
+					{isLoggedIn && (
+						<NavLink to="/profile" style={({ isActive }) => getNavLinkStyle(isActive)}>
+							My Profile
+						</NavLink>
+					)}
+				</div>
+
+				<div style={{ marginLeft: "auto", marginRight: "20px" }}>
+                	{isLoggedIn ? (
 
 						<button
 							onClick={handleLogout}
@@ -116,30 +119,27 @@ export default function Dashboard() {
 								borderRadius: "4px",
 								border: "none",
 								cursor: "pointer",
-								marginLeft: "12px"
 							}}
 						>
 							Logout
 						</button>
-				</>
-			) : (
-				<>
-					<button
-						onClick={() => setShowLogin(true)}
-						style={{
-							color: "white",
-							backgroundColor: "#2563eb",
-							padding: "8px 16px",
-							borderRadius: "6px",
-							border: "none",
-							cursor: "pointer",
-							fontSize: "16px"
-						}}
-					>
-						Login
-					</button>
-				</>
-				)}
+					) : (
+						<button
+							onClick={() => setShowLogin(true)}
+							style={{
+								color: "white",
+								backgroundColor: "#2563eb",
+								padding: "8px 16px",
+								borderRadius: "6px",
+								border: "none",
+								cursor: "pointer",
+								fontSize: "16px"
+							}}
+						>
+							Login
+						</button>
+					)}
+				</div>
 			</nav>
 
 			{showLogin && (
