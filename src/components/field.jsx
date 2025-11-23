@@ -1,12 +1,15 @@
+import { FIELD_WIDTH, FIELD_HEIGHT } from "../Game/game_config.js";
+
 export default function Field({ children }) {
     const fieldStyle = {
 		position: "relative",
-		width: 750,
-		height: 400,
+		width: FIELD_WIDTH,
+		height: FIELD_HEIGHT,
 		background: "#1f2937",
 		border: "1px solid #ccc",
 		borderRadius: 6,
-		boxSizing: "border-box"
+		boxSizing: "border-box",
+		overflow: "visible"
 	}
 
 	const midLineStyle = {
