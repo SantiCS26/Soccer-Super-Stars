@@ -32,9 +32,9 @@ export default function LoginWindow({ onClose, onSuccess }) {
 
     return (
         <div
-            className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 overflow-auto p-4"
+            className="fixed inset-0 z-50 flex justify-center items-center bg-black bg-opacity-50 overflow-auto"
         >
-            <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm mt-20">
+            <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm mx-4">
                 <h2 className="text-2xl font-semibold text-center mb-6">Login</h2>
 
                 <form onSubmit={handleLogin}>
