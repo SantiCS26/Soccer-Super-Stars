@@ -32,7 +32,7 @@ export default function LoginWindow({ onClose, onSuccess }) {
 
     return (
         <div
-            className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
+            className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-start pt-24 z-50"
         >
             <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm">
                 <h2 className="text-2xl font-semibold text-center mb-6">Login</h2>
