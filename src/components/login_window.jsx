@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Input from "./input";
 
-export default function LoginWindow({ onClose, onSuccess }) {
+export default function LoginWindow({ onClose, onSuccess, onSwitchToRegister }) {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
 

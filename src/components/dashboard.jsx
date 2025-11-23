@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import LoginWindow from "../components/login_window";
+import RegisterWindow from "../components/register_window";
 import { NavLink, useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
 	const [isLoggedIn, setIsLoggedIn] = useState(false);
 	const [showLogin, setShowLogin] = useState(false);
+	const [showRegister, setShowRegister] = useState(false);
+
 	const navigate = useNavigate();
 	const navLinkStyle = {
 		color: "white",
@@ -40,7 +43,8 @@ export default function Dashboard() {
 
 	const navLinksContainerStyle = {
 		display: "flex",
-		gap: "16px"
+		gap: "16px",
+		alignItems: "center"
 	};
 
 	useEffect(() => {
@@ -107,7 +111,7 @@ export default function Dashboard() {
 					)}
 				</div>
 
-				<div style={{ marginLeft: "auto", marginRight: "20px" }}>
+				<div>
                 	{isLoggedIn ? (
 
 						<button
@@ -143,11 +147,25 @@ export default function Dashboard() {
 			</nav>
 
 			{showLogin && (
-				<LoginWindow
-					onClose={() => setShowLogin(false)}
-					onSuccess={() => setIsLoggedIn(true)}
-				/>
-			)}
+                <LoginWindow
+                    onClose={() => setShowLogin(false)}
+                    onSuccess={() => setIsLoggedIn(true)}
+                    onSwitchToRegister={() => {
+                        setShowLogin(false);
+                        setShowRegister(true);
+                    }}
+                />
+            )}
+
+            {showRegister && (
+                <RegisterWindow
+                    onClose={() => setShowRegister(false)}
+                    onSwitchToLogin={() => {
+                        setShowRegister(false);
+                        setShowLogin(true);
+                    }}
+                />
+            )}
 		</>
 	);
 }
