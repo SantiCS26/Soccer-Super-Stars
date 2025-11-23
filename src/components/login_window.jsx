@@ -79,14 +79,6 @@ export default function LoginWindow({ onClose, onSuccess, onSwitchToRegister }) 
                         Cancel
                     </button>
 
-                    <button
-                        type="button"
-                        onClick={() => { onClose(); onSuccess("guest"); }}
-                        className="w-full bg-gray-700 text-white py-2 rounded-lg mt-3 hover:bg-gray-800 transition"
-                    >
-                        Continue as Guest
-                    </button>
-
                     <div className="text-sm text-center text-gray-600 mt-4">
                         Need to create an account?{" "}
                         <button
