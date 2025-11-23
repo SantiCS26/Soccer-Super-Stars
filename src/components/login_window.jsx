@@ -30,11 +30,34 @@ export default function LoginWindow({ onClose, onSuccess }) {
         }
     };
 
+    const overlayStyle = {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100%",
+        height: "100%",
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        zIndex: 1000
+    };
+
+    const windowStyle = {
+        backgroundColor: "white",
+        padding: "2rem",
+        borderRadius: "1rem",
+        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+        width: "100%",
+        maxWidth: "24rem",
+        margin: "0 1rem",
+        maxHeight: "90vh",
+        overflowY: "auto"
+    };
+
     return (
-        <div
-            className="fixed inset-0 z-50 flex justify-center items-center bg-black bg-opacity-50 overflow-auto p-4"
-        >
-            <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm mx-4">
+        <div style={overlayStyle}>
+            <div style={windowStyle}>
                 <h2 className="text-2xl font-semibold text-center mb-6">Login</h2>
 
                 <form onSubmit={handleLogin}>
