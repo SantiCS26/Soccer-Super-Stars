@@ -9,6 +9,12 @@ import http from "http";
 import { Server } from "socket.io";
 import crypto from "crypto";
 import cookieParser from "cookie-parser";
+import {
+	createInitialGameState,
+	updatePlayerPosition,
+	applyKick,
+	stepGame
+} from "./src/Game/game_state.js";
 
 
 dotenv.config();
@@ -27,6 +33,8 @@ const DEFAULT_SETTINGS = {
 	matchDurationSec: 180,
 	goalLimit: 5
 };
+
+const PHYSICS_TICK_MS = 1000 / 60;
 
 if (process.env.FLY_APP_NAME) {
 	host = "0.0.0.0";
@@ -58,7 +66,7 @@ app.use(cors({
 	origin: ["http://localhost:5173", "https://soccer-super-stars.fly.dev"],
 	methods: ["GET","POST","OPTIONS"],
 	allowedHeaders: ["Content-Type"],
-  credentials: true
+	credentials: true
 }));
 app.use(cookieParser());
 app.use(express.json());
@@ -76,7 +84,7 @@ const pool = new Pool(databaseConfig);
 })();
 
 function makeToken() {
-  return crypto.randomBytes(32).toString("hex");
+	return crypto.randomBytes(32).toString("hex");
 }
 
 
@@ -187,8 +195,8 @@ app.post("/api/login", async (req, res) => {
 
     res.cookie("token", token, cookieOptions);
     return res.status(200).json({
-      message: "Login successful",
-      user: { username: user.username }
+		message: "Login successful",
+		user: { username: user.username }
     });
 	} catch (err) {
 		console.error("Login error:", err);
@@ -197,12 +205,12 @@ app.post("/api/login", async (req, res) => {
 });
 
 let authorize = (req, res, next) => {
-  let { token } = req.cookies;
-  console.log(token, tokenStorage);
-  if (token === undefined || !tokenStorage.hasOwnProperty(token)) {
-    return res.sendStatus(403); // TODO
-  }
-  next();
+	let { token } = req.cookies;
+	console.log(token, tokenStorage);
+	if (token === undefined || !tokenStorage.hasOwnProperty(token)) {
+		return res.sendStatus(403); // TODO
+	}
+	next();
 };
 
 app.post("/api/logout", (req, res) => {
@@ -214,12 +222,12 @@ app.post("/api/logout", (req, res) => {
 
 	delete tokenStorage[token];
 	res.cookie("token", "", {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    expires: new Date(0)
-  });
-  return res.sendStatus(200);
+		httpOnly: true,
+		secure: true,
+		sameSite: "none",
+		expires: new Date(0)
+	});
+	return res.sendStatus(200);
 });
 
 app.get("/public", (req, res) => res.send("THIS IS PUBLIC\n"));
@@ -325,6 +333,8 @@ io.on("connection", (socket) => {
 			room.settings = { ...room.settings, ...settings };
 		}
 
+		room.game = createInitialGameState(room);
+
 		console.log(`Game started in room ${upperRoomId}`);
 
 		io.to(upperRoomId).emit("gameStarted", {
@@ -367,7 +377,28 @@ io.on("connection", (socket) => {
 		}
 
 		const upperRoomId = roomId.toUpperCase();
+		const room = rooms[upperRoomId];
+
+		if (room && room.game && move && typeof move.x === "number" && typeof move.y === "number") {
+			updatePlayerPosition(room.game, socket.id, move.x, move.y);
+		}
+
 		socket.to(upperRoomId).emit("opponentMove", move);
+	});
+
+	socket.on("kickBall", ({ roomId }) => {
+		if (!roomId) {
+			return;
+		}
+
+		const upperRoomId = roomId.toUpperCase();
+		const room = rooms[upperRoomId];
+
+		if (!room || !room.game) {
+			return;
+		}
+
+		applyKick(room.game, socket.id);
 	});
 
 	socket.on("disconnect", () => {
@@ -398,6 +429,41 @@ io.on("connection", (socket) => {
 		}
 	});
 });
+
+let lastPhysicsTime = Date.now();
+
+setInterval(() => {
+	const now = Date.now();
+	const deltaTime = (now - lastPhysicsTime) / 1000;
+	lastPhysicsTime = now;
+
+	for (const [roomId, room] of Object.entries(rooms)) {
+		if (!room.game || !room.game.isPlaying) {
+			continue;
+		}
+
+		const { roundReset, matchEnded } = stepGame(
+			room.game,
+			deltaTime,
+			room.settings,
+			now
+		);
+
+		io.to(roomId).emit("gameState", {
+			ball: room.game.ball,
+			score: room.game.score,
+			round: room.game.round
+		});
+
+		if (roundReset) {
+			io.to(roomId).emit("roundReset", roundReset);
+		}
+
+		if (matchEnded) {
+			io.to(roomId).emit("matchEnded", matchEnded);
+		}
+	}
+}, PHYSICS_TICK_MS);
 
 server.listen(PORT, host, () => {
 	console.log(`LISTENING https://${host}:${PORT}`);

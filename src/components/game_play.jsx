@@ -2,14 +2,21 @@ import { useState, useEffect, useRef } from "react";
 
 import Field from "./field.jsx";
 import Player from "./player.jsx";
+import Ball from "./ball.jsx";
+import Goal from "./goal.jsx";
 
 import { movePlayer } from "../Game/movement.js";
 import { useGameInputs } from "../Game/game_inputs.js";
+import { 
+	FIELD_WIDTH, 
+	FIELD_HEIGHT, 
+	PLAYER_SPEED, 
+} from "../Game/game_config.js";
 
 export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
-	const fieldWidth = 750;
-	const fieldHeight = 400;
-	const playerSpeed = 300;
+	const fieldWidth = FIELD_WIDTH;
+	const fieldHeight = FIELD_HEIGHT;
+	const playerSpeed = PLAYER_SPEED;
 
 	const playerElementRef = useRef(null);
 	const opponentElementRef = useRef(null);
@@ -17,6 +24,9 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 	const animationFrameRef = useRef(null);
 
 	const keyInputsRef = useGameInputs();
+	const lastSpaceDownRef = useRef(false);
+	const matchTimerStartedRef = useRef(false);
+	const matchTimerIdRef = useRef(null);
 
 	let localStartX = fieldWidth / 4;
 	let remoteStartX = (fieldWidth / 4) * 3;
@@ -45,6 +55,18 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 
 	const [remainingTime, setRemainingTime] = useState(0);
 
+	const [ballState, setBallState] = useState({
+		x: fieldWidth / 2,
+		y: fieldHeight / 2,
+		radius: 8
+	});
+
+	const [score, setScore] = useState({
+		left: 0,
+		right: 0
+	});
+
+	const [serverRound, setServerRound] = useState(0);
 
 	useEffect(() => {
 		if (!socket || !roomId) {
@@ -100,12 +122,14 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 		return () => {
 			clearInterval(intervalId);
 		};
-	}, [roomId]);
+	}, [roomId, serverRound]);
 
 	useEffect(() => {
-		if (!canMove) {
+		if (!canMove || matchTimerStartedRef.current) {
 			return;
 		}
+
+		matchTimerStartedRef.current = true;
 
 		let matchDurationSeconds = 180;
 
@@ -117,13 +141,14 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 
 		let secondsLeft = matchDurationSeconds;
 
-		const timerId = setInterval(() => {
+		const id = setInterval(() => {
 			secondsLeft = secondsLeft - 1;
 
 			if (secondsLeft <= 0) {
 				setRemainingTime(0);
 				setCanMove(false);
-				clearInterval(timerId);
+				clearInterval(id);
+				matchTimerIdRef.current = null;
 
 				if (socket && roomId) {
 					socket.emit("matchEnd", {
@@ -139,10 +164,16 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 			}
 		}, 1000);
 
+		matchTimerIdRef.current = id;
+	}, [canMove, settings, socket, roomId, onExit]);
+
+	useEffect(() => {
 		return () => {
-			clearInterval(timerId);
+			if (matchTimerIdRef.current) {
+				clearInterval(matchTimerIdRef.current);
+			}
 		};
-	}, [canMove]);
+	}, []);
 
 	useEffect(() => {
 		function gameLoop(timestamp) {
@@ -152,6 +183,8 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 
 			const deltaTime = (timestamp - lastFrameTimeRef.current) / 1000;
 			lastFrameTimeRef.current = timestamp;
+
+			const keyState = keyInputsRef.current || {};
 
 			if (canMove) {
 				movePlayer(
@@ -163,6 +196,16 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 					playerSpeed
 				);
 			}
+
+			const isSpaceDown = !!(keyState[" "] || keyState["space"] || keyState["spacebar"]);
+
+			if (isSpaceDown && !lastSpaceDownRef.current) {
+				if (socket && roomId) {
+					socket.emit("kickBall", { roomId });
+				}
+			}
+
+			lastSpaceDownRef.current = isSpaceDown;
 
 			if (socket && roomId) {
 				socket.emit("playerMove", {
@@ -198,6 +241,94 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 		};
 	}, [socket, roomId, canMove, keyInputsRef]);
 
+	useEffect(() => {
+		if (!socket || !roomId) {
+			return;
+		}
+
+		function handleGameState({ ball, score, round }) {
+			if (ball) {
+				setBallState(ball);
+			}
+
+			if (score) {
+				setScore(score);
+			}
+
+			if (typeof round === "number") {
+				setServerRound(round);
+			}
+		}
+
+		function handleRoundReset(payload) {
+
+			if (payload.ball) {
+				setBallState(payload.ball);
+			}
+
+			if (payload.score) {
+				setScore(payload.score);
+			}
+
+			if (typeof payload.round === "number") {
+				setServerRound(payload.round);
+			}
+
+			if (payload.playerPositions && socket.id) {
+				const myPos = payload.playerPositions[socket.id];
+				const opponentId = Object.keys(payload.playerPositions).find(
+					(id) => id !== socket.id
+				);
+
+				let oppPos;
+				if (opponentId) {
+					oppPos = payload.playerPositions[opponentId];
+				} else {
+					oppPos = null;
+				}
+
+				if (myPos) {
+					playerDataRef.current = {
+						...playerDataRef.current,
+						x: myPos.x,
+						y: myPos.y
+					};
+				}
+
+				if (oppPos) {
+					opponentDataRef.current = {
+						...opponentDataRef.current,
+						x: oppPos.x,
+						y: oppPos.y
+					};
+				}
+			}
+
+			setCountdown(3);
+			setCanMove(false);
+		}
+
+		function handleMatchEnded({ score, winnerSide }) {
+			console.log("Match ended:", score, "winner:", winnerSide);
+
+			setCanMove(false);
+
+			if (onExit) {
+				onExit();
+			}
+		}
+
+		socket.on("gameState", handleGameState);
+		socket.on("roundReset", handleRoundReset);
+		socket.on("matchEnded", handleMatchEnded);
+
+		return () => {
+			socket.off("gameState", handleGameState);
+			socket.off("roundReset", handleRoundReset);
+			socket.off("matchEnded", handleMatchEnded);
+		};
+	}, [socket, roomId, onExit]);
+
 	const wrapperStyle = {
 		width: fieldWidth,
 		margin: "20px auto",
@@ -216,7 +347,7 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 
 	const countdownOverlayStyle = {
 		position: "absolute",
-		top: "50%",
+		top: "25%",
 		left: "50%",
 		transform: "translate(-50%, -50%)",
 		fontSize: 48,
@@ -254,18 +385,37 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 		return minutes + ":" + paddedSeconds;
 	}
 
+	let myScore;
+	let opponentScore;
+
+	if (isHost) {
+		myScore = score.left;
+		opponentScore = score.right;
+	} else {
+		myScore = score.right;
+		opponentScore = score.left;
+	}
+
 	return (
 		<div style={wrapperStyle}>
 			<div style={hudStyle}>
-				<div style={hudLeftStyle}>Score: 0 | 0</div>
+				<div style={hudLeftStyle}>Score: {myScore} | {opponentScore}</div>
 				<div style={hudRightStyle}>Time: {formatMatchTime(remainingTime)}</div>
 			</div>
 			<div style={{ position: "relative" }}>
 				<Field>
+					<Goal side="left" />
+					<Goal side="right" />
+
 					<Player ref={playerElementRef} color="#60a5fa" />
 					<Player ref={opponentElementRef} color="#fa6060ff" />
-				</Field>
 
+					<Ball
+						x={ballState.x}
+						y={ballState.y}
+						radius={ballState.radius || 8}
+					/>
+				</Field>
 				{countdown > 0 && (
 					<div style={countdownOverlayStyle}>
 						{countdown}
@@ -273,7 +423,7 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 				)}
 			</div>
 
-			<div style={helpTextStyle}>Controls: W, A, S, D</div>
+			<div style={helpTextStyle}>Controls: W, A, S, D or Arrow Keys | Spacebar to Kick</div>
 			<button onClick={onExit} style={exitButtonStyle}>
 				Exit
 			</button>
