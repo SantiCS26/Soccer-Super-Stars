@@ -260,7 +260,7 @@ function tryMatchCompetitivePlayers() {
     return null;
 }
 
-app.post("/competitive/join", authorize, async (req, res) => {
+app.post("/join", authorize, async (req, res) => {
     const { token } = req.cookies;
     const username = tokenStorage[token];
 

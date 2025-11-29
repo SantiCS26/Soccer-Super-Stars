@@ -31,7 +31,7 @@ export default function GameSettings({ onHost, onJoin }) {
 	};
 
 	async function onJoinCompetitive() {
-		const res = await fetch("https://soccer-super-stars.fly.dev/competitive/join", {
+		const res = await fetch("https://soccer-super-stars.fly.dev/join", {
 			method: "POST",
 			credentials: "include"
 		});
