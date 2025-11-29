@@ -1,5 +1,4 @@
 import { useState } from "react";
-
 import "../Pages-style/game_settings.css"
 
 export default function GameSettings({ onHost, onJoin }) {
@@ -31,6 +30,15 @@ export default function GameSettings({ onHost, onJoin }) {
 		onJoin(trimmed);
 	};
 
+	const handleJoinRandomCompetitive = () => {
+		onJoin("RANDOM_COMP");
+	};
+
+	const handleJoinRandomCasual = () => {
+		onJoin("RANDOM_CASUAL");
+	};
+
+
 	return (
 		<div className="settingsBox">
 			<h3 className="settingsLabel">Create a Lobby</h3>
@@ -59,6 +67,24 @@ export default function GameSettings({ onHost, onJoin }) {
 					onClick={handleJoinClick}
 				>
 					Join Game
+				</button>
+			</div>
+
+			<div className="settingsGroup randomGroup">
+				<h3 className="settingsLabel">Or Join Random Match</h3>
+
+				<button
+					className="settingsButton randomCompetitive"
+					onClick={handleJoinRandomCompetitive}
+				>
+					Competitive Match
+				</button>
+
+				<button
+					className="settingsButton randomCasual"
+					onClick={handleJoinRandomCasual}
+				>
+					Random Casual Match
 				</button>
 			</div>
 		</div>
