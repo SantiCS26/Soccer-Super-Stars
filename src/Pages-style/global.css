@@ -36,8 +36,9 @@ html, body {
 .hero-title {
   font-size: 48px;
   font-weight: 800;
-  color: #1a1a1a;
+  color: #4a4747;
   margin-bottom: 10px;
+  margin-top: -25px;
 }
 
 .hero-subtitle {

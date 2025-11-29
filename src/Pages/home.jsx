@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 export default function Home() {
   return (
     <div className="home-container">
-      {/* HERO SECTION */}
       <section className="hero">
         <h1 className="hero-title">⚽ Soccer Super Stars</h1>
         <p className="hero-subtitle">
@@ -17,7 +16,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FEATURES */}
       <section className="features">
         <div className="feature-card">
           <h2>🔥 Competitive Mode</h2>
@@ -40,7 +38,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* FOOTER QUOTE OR TAGLINE */}
       <section className="footer-tagline">
         <p>Train hard. Play harder. Become a legend.</p>
       </section>

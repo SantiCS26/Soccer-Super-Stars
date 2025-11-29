@@ -36,7 +36,7 @@ export default function LoginWindow({ onClose, onSuccess, onSwitchToRegister }) 
         left: 0,
         width: "100%",
         height: "100%",
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        backgroundColor: "rgba(0, 0, 0, 0.75)",
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
@@ -44,10 +44,10 @@ export default function LoginWindow({ onClose, onSuccess, onSwitchToRegister }) 
     };
 
     const windowStyle = {
-        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        backgroundColor: "rgba(0, 0, 0, 0.75)",
         padding: "2rem",
         borderRadius: "1rem",
-        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+        boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
         width: "100%",
         maxWidth: "24rem",
         margin: "0 1rem",
