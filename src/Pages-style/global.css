@@ -22,3 +22,105 @@ html, body {
 	color: white;
 	text-align: center;
 }
+
+.home-container {
+  padding: 60px 20px;
+  text-align: center;
+  animation: fadeIn 0.8s ease;
+}
+
+.hero {
+  margin-bottom: 60px;
+}
+
+.hero-title {
+  font-size: 48px;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin-bottom: 10px;
+}
+
+.hero-subtitle {
+  font-size: 18px;
+  color: #555;
+  max-width: 600px;
+  margin: 0 auto 25px auto;
+}
+
+.hero-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 12px 24px;
+  font-size: 16px;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: 0.2s ease;
+}
+
+.btn-primary {
+  background-color: #2563eb;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #1d4ed8;
+}
+
+.btn-secondary {
+  background-color: #e5e7eb;
+  color: #111;
+}
+
+.btn-secondary:hover {
+  background-color: #d1d5db;
+}
+
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 25px;
+  margin-bottom: 60px;
+  padding: 0 20px;
+}
+
+.feature-card {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  transition: 0.25s ease;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+}
+
+.feature-card h2 {
+  margin-bottom: 10px;
+  font-size: 20px;
+  color: #111;
+}
+
+.feature-card p {
+  color: #444;
+  font-size: 15px;
+}
+
+.footer-tagline {
+  margin-top: 30px;
+  font-size: 18px;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
