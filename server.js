@@ -28,6 +28,8 @@ let host;
 let databaseConfig;
 let rooms = {};
 let tokenStorage = {};
+let competitiveQueue = []; 
+
 
 const DEFAULT_SETTINGS = {
 	matchDurationSec: 180,
@@ -230,6 +232,71 @@ app.post("/api/logout", (req, res) => {
 	return res.sendStatus(200);
 });
 
+function tryMatchCompetitivePlayers() {
+    if (competitiveQueue.length < 2) return null;
+
+    competitiveQueue.sort((a, b) => a.score - b.score);
+
+    for (let i = 0; i < competitiveQueue.length - 1; i++) {
+        const p1 = competitiveQueue[i];
+        const p2 = competitiveQueue[i + 1];
+
+        const difference = Math.abs(p1.score - p2.score);
+
+        if (difference <= 150) {
+            const roomId = generateRoomCode();
+            rooms[roomId] = {
+                settings: { matchDurationSec: 180, goalLimit: 5 },
+                players: {},
+                game: null
+            };
+
+            competitiveQueue = competitiveQueue.filter(p => p !== p1 && p !== p2);
+
+            return { roomId, p1, p2 };
+        }
+    }
+
+    return null;
+}
+
+app.post("/competitive/join", authorize, async (req, res) => {
+    const { token } = req.cookies;
+    const username = tokenStorage[token];
+
+    const result = await pool.query(
+        "SELECT score FROM users WHERE username = $1",
+        [username]
+    );
+
+    if (result.rows.length === 0) {
+        return res.status(400).json({ message: "User not found" });
+    }
+
+    const score = result.rows[0].score;
+
+    const player = {
+        username,
+        score,
+        socketId: null,
+    };
+
+    competitiveQueue.push(player);
+    console.log("Competitive queue:", competitiveQueue);
+
+    const match = tryMatchCompetitivePlayers();
+
+    if (match) {
+        return res.json({
+            matched: true,
+            roomId: match.roomId
+        });
+    }
+
+    return res.json({ matched: false });
+});
+
+
 app.get("/public", (req, res) => res.send("THIS IS PUBLIC\n"));
 app.get("/private", authorize, (req, res) => res.send("THIS IS PRIVATE\n"));
 
@@ -428,6 +495,15 @@ io.on("connection", (socket) => {
 			}
 		}
 	});
+
+  socket.on("competitiveAttach", ({ username }) => {
+    for (const player of competitiveQueue) {
+      if (player.username === username) {
+        player.socketId = socket.id;
+      }
+    }
+  });
+
 });
 
 let lastPhysicsTime = Date.now();

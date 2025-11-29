@@ -30,11 +30,22 @@ export default function GameSettings({ onHost, onJoin }) {
 		onJoin(trimmed);
 	};
 
-	const handleJoinRandomCompetitive = () => {
-		onJoin("RANDOM_COMP");
-	};
+	async function onJoinCompetitive() {
+		const res = await fetch("https://soccer-super-stars.fly.dev/competitive/join", {
+			method: "POST",
+			credentials: "include"
+		});
 
-	const handleJoinRandomCasual = () => {
+		const data = await res.json();
+
+		if (data.matched) {
+			onJoin(data.roomId);
+		} else {
+			alert("Waiting for another player with similar skill…");
+		}
+	}
+
+	const onJoinCasual = () => {
 		onJoin("RANDOM_CASUAL");
 	};
 
@@ -75,16 +86,16 @@ export default function GameSettings({ onHost, onJoin }) {
 
 				<button
 					className="settingsButton randomCompetitive"
-					onClick={handleJoinRandomCompetitive}
+					onClick={onJoinCompetitive}
 				>
 					Competitive Match
 				</button>
 
 				<button
 					className="settingsButton randomCasual"
-					onClick={handleJoinRandomCasual}
+					onClick={onJoinCasual}
 				>
-					Random Casual Match
+					Casual Match
 				</button>
 			</div>
 		</div>
