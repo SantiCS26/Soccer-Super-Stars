@@ -287,10 +287,12 @@ app.post("/join", authorize, async (req, res) => {
     const match = tryMatchCompetitivePlayers();
 
     if (match) {
-        return res.json({
-            matched: true,
-            roomId: match.roomId
-        });
+      const { playerA, playerB, roomId } = match;
+
+      io.to(playerA.socketId).emit("competitiveMatched", { roomId });
+      io.to(playerB.socketId).emit("competitiveMatched", { roomId });
+
+      return res.json({ matched: true, roomId });
     }
 
     return res.json({ matched: false });

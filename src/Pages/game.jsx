@@ -4,6 +4,7 @@ import { io } from "socket.io-client";
 import GameSettings from "../components/game_settings.jsx";
 import GamePlay from "../components/game_play.jsx";
 import Lobby from "../components/lobby.jsx";
+import CompetitiveLobby from "../components/competitiveLobby.jsx";
 
 import "../Pages-style/global.css"
 
@@ -18,6 +19,7 @@ export default function GamePage() {
 	const [isHost, setIsHost] = useState(false);
 	const [socketConnection, setSocketConnection] = useState(null);
 	const [players, setPlayers] = useState([]);
+	const [mode, setMode] = useState("casual"); 
 	const [settings, setSettings] = useState({
 		matchDurationSec: 180,
 		goalLimit: 5
@@ -50,6 +52,12 @@ export default function GamePage() {
 			if (state.players) {
 				setPlayers(state.players);
 			}
+		});
+
+		socket.on("competitiveMatched", ({ roomId }) => {
+			console.log("Matched competitive game:", roomId);
+			setMode("competitive");
+			handleJoin(roomId);
 		});
 
 		newSocket.on("gameStarted", ({ settings: serverSettings }) => {
@@ -89,9 +97,10 @@ export default function GamePage() {
 		};
 	}, []);
 
-	function handleHost(hostRoomId) {
+	function handleHostCasual(hostRoomId) {
 		const upperRoomId = hostRoomId.toUpperCase();
 
+		setMode("casual");
 		setRoomId(upperRoomId);
 		setIsHost(true);
 		setPhase("lobby");
@@ -104,9 +113,10 @@ export default function GamePage() {
 		}
 	}
 
-	function handleJoin(joinCode) {
+	function handleJoinCasual(joinCode) {
 		const upperRoomId = joinCode.toUpperCase();
 
+		setMode("casual");
 		setRoomId(upperRoomId);
 		setIsHost(false);
 		setPhase("lobby");
@@ -119,7 +129,41 @@ export default function GamePage() {
 		}
 	}
 
+	async function handleSearchCompetitive() {
+		setMode("competitive");
+		setPhase("searching");
+
+		const res = await fetch(
+			"https://soccer-super-stars.fly.dev/join",
+			{
+				method: "POST",
+				credentials: "include"
+			}
+		);
+
+		const data = await res.json();
+
+		if (data.matched) {
+			handleJoin(data.roomId);
+		} else {
+			console.log("Searching for match...");
+		}
+	}
+
+	function handleJoin(roomCode) {
+		setRoomId(roomCode.toUpperCase());
+		setIsHost(false);
+		setPhase("lobby");
+
+		socketConnection.emit("joinRoom", {
+			roomId: roomCode.toUpperCase(),
+			isHost: false
+		});
+	}
+
 	function handleChangeSettings(nextSettingsOrUpdater) {
+		if (mode === "competitive") return;
+
 		setSettings((previousSettings) => {
 			let nextSettings = nextSettingsOrUpdater;
 
@@ -158,14 +202,18 @@ export default function GamePage() {
 	}
 
 	function handleStartGame() {
-		if (socketConnection && roomId) {
-			socketConnection.emit("startGame", {
-				roomId: roomId,
-				settings: settings
-			});
-		}
 
-		setPhase("playing");
+		if (socketConnection && roomId) {
+			if (mode === "casual") {
+				socketConnection.emit("startGame", {
+					roomId,
+					settings
+				});
+				setPhase("playing");
+			} else {
+				socketConnection.emit("playerReady", { roomId });
+			}
+		}
 	}
 
 	function handleExitGame() {
@@ -177,22 +225,42 @@ export default function GamePage() {
 	if (phase === "menu") {
 		content = (
 			<GameSettings
-				onHost={handleHost}
-				onJoin={handleJoin}
+				mode={mode}
+				onHost={handleHostCasual}
+				onJoin={handleJoinCasual}
+				onCompetitive={handleSearchCompetitive}
 			/>
+		);
+	} else if (phase === "searching") {
+		content = (
+			<div className="searchingBox">
+				<h2>Searching for opponent…</h2>
+				<p>We’re matching you with a player of similar skill.</p>
+			</div>
 		);
 	} else if (phase === "lobby") {
-		content = (
-			<Lobby
-				roomId={roomId}
-				isHost={isHost}
-				settings={settings}
-				players={players}
-				onChangeSettings={handleChangeSettings}
-				onBack={handleBackToMenu}
-				onStart={handleStartGame}
-			/>
-		);
+		if (mode === "competitive") {
+			content = (
+				<CompetitiveLobby
+					roomId={roomId}
+					players={players}
+					onStart={handleStartGame}
+					onBack={handleBackToMenu}
+				/>
+			);
+		} else {
+			content = (
+				<Lobby
+					roomId={roomId}
+					isHost={isHost}
+					settings={settings}
+					players={players}
+					onChangeSettings={handleChangeSettings}
+					onBack={handleBackToMenu}
+					onStart={handleStartGame}
+				/>
+			);
+		}
 	} else if (phase === "playing") {
 		content = (
 			<GamePlay
