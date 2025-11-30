@@ -287,13 +287,30 @@ app.post("/join", authorize, async (req, res) => {
     const match = tryMatchCompetitivePlayers();
 
     if (match) {
-      const { playerA, playerB, roomId } = match;
+      const { roomId, p1, p2 } = match;
 
-      io.to(playerA.socketId).emit("competitiveMatched", { roomId });
-      io.to(playerB.socketId).emit("competitiveMatched", { roomId });
+      rooms[roomId] = {
+          settings: { matchDurationSec: 180, goalLimit: 5 },
+          players: {
+              [p1.socketId]: {
+                  id: p1.socketId,
+                  username: p1.username,
+                  isHost: true
+              },
+              [p2.socketId]: {
+                  id: p2.socketId,
+                  username: p2.username,
+                  isHost: false
+              }
+          },
+          game: null
+      };
+
+      io.to(p1.socketId).emit("competitiveMatched", { roomId });
+      io.to(p2.socketId).emit("competitiveMatched", { roomId });
 
       return res.json({ matched: true, roomId });
-    }
+  }
 
     return res.json({ matched: false });
 });
@@ -315,11 +332,13 @@ io.on("connection", (socket) => {
 		}
 
 		const playersArray = Object.values(room.players).map((player) => {
-			return {
-				id: player.id,
-				isHost: player.isHost
-			};
-		});
+      return {
+        id: player.id,
+        username: player.username || "Guest",
+        isHost: player.isHost
+      };
+    });
+
 
 		io.to(roomId).emit("lobbyState", {
 			roomId: roomId,

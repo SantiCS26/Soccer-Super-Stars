@@ -54,7 +54,7 @@ export default function GamePage() {
 			}
 		});
 
-		socket.on("competitiveMatched", ({ roomId }) => {
+		newSocket.on("competitiveMatched", ({ roomId }) => {
 			console.log("Matched competitive game:", roomId);
 			setMode("competitive");
 			handleJoin(roomId);
