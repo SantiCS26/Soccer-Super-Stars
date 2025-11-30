@@ -1,5 +1,5 @@
 import "../Pages-style/global.css";
-import "./profile.css";
+import "../Pages-style/profile.css";
 
 export default function Profile() {
 	return (
