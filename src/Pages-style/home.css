@@ -37,6 +37,9 @@ body, html {
   margin: 0 auto;
   padding-left: 24px;
   padding-right: 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 /* --- Hero Section --- */
