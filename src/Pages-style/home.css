@@ -27,6 +27,7 @@ body, html {
 }
 
 .home-container {
+  min-height: 70 hv;
   padding-top: 100px; 
   padding-bottom: 60px;
   justify-content: flex-start;
