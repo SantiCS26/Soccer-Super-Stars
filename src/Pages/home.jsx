@@ -31,10 +31,6 @@ export default function Home() {
           Master your skills. Compete globally. Become the superstar you were meant to be.
         </p>
 
-        <div className="hero-buttons fade-in-slow">
-          <Link to="/game" className="btn-primary">Play Now</Link>
-          <Link to="/leaderboard" className="btn-secondary">Leaderboard</Link>
-        </div>
       </section>
 
       <section className="how-to-play fade-in">

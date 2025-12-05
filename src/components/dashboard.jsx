@@ -18,7 +18,7 @@ export default function Dashboard() {
         height: "64px",
         backgroundColor: "#1f2937",
         boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-        zIndex: 40,
+        zIndex: 50,
         display: "flex",
         justifyContent: "center",
         alignItems: "center",
@@ -27,12 +27,25 @@ export default function Dashboard() {
 
 	const navContainerStyle = {
         width: "100%",
-        maxWidth: "1200px",
-        padding: "0 24px",
+        maxWidth: "1400px",
+        padding: "0 30px",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
     };
+
+	const centerLinksStyle = {
+		display: "flex",
+		gap: "22px",
+		alignItems: "center",
+		justifyContent: "center",
+		flex: 1,
+	};
+
+	const dividerStyle = {
+		color: "rgba(255,255,255,0.4)",
+		fontSize: "16px",
+	};
 
 	const linksGroupStyle = {
         display: "flex",
@@ -121,49 +134,34 @@ export default function Dashboard() {
             <nav style={navBarStyle}>
                 <div style={navContainerStyle}>
                     
-                    {/* Left Side: Navigation Links */}
-                    <div style={linksGroupStyle}>
-                        <NavLink to="/" style={getNavLinkStyle}>
-                            Home
-                        </NavLink>
+                    <div style={centerLinksStyle}>
+                        <NavLink to="/" style={getNavLinkStyle}>🏠 Home</NavLink>
+						<span style={dividerStyle}>|</span>
 
-                        <NavLink to="/game" style={getNavLinkStyle}>
-                            Play Game
-                        </NavLink>
+						<NavLink to="/game" style={getNavLinkStyle}>⚽ Play</NavLink>
+						<span style={dividerStyle}>|</span>
 
-                        <NavLink to="/leaderboard" style={getNavLinkStyle}>
-                            Leaderboard
-                        </NavLink>
-
-                        {isLoggedIn && (
-                            <NavLink to="/profile" style={getNavLinkStyle}>
-                                My Profile
-                            </NavLink>
-                        )}
+						<NavLink to="/leaderboard" style={getNavLinkStyle}>🏆 Leaderboard</NavLink>
+						{isLoggedIn && <>
+						<span style={dividerStyle}>|</span>
+						<NavLink to="/profile" style={getNavLinkStyle}>👤 Profile</NavLink>
+						</>}
                     </div>
 
-                    {/* Right Side: Auth Buttons */}
                     <div>
                         {isLoggedIn ? (
-                            <button
-                                onClick={handleLogout}
-                                style={logoutButtonStyle}
-                            >
-                                Logout
-                            </button>
-                        ) : (
-                            <button
-                                onClick={() => setShowLogin(true)}
-                                style={loginButtonStyle}
-                            >
-                                Login
-                            </button>
-                        )}
+                            <button onClick={handleLogout} style={logoutButtonStyle}>
+								Logout
+							</button>
+							) : (
+							<button onClick={() => setShowLogin(true)} style={loginButtonStyle}>
+								Login
+							</button>
+							)}
                     </div>
                 </div>
             </nav>
 
-            {/* Spacer to prevent content from hiding behind fixed nav */}
             <div style={{ height: "64px" }}></div>
 
             {showLogin && (
