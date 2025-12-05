@@ -77,6 +77,12 @@ export default function Dashboard() {
         opacity: isActive ? 1 : 0.8,
     });
 
+	const authContainerStyle = {
+        marginLeft: "auto",
+        display: "flex",
+        alignItems: "center"
+    };
+
 
 	useEffect(() => {
         const checkLogin = async () => {
