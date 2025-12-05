@@ -1,6 +1,6 @@
 /* --- Page Layout --- */
 .leaderboard-page {
-    background-color: var(--bg-color, #0f172a);
+    min-height: 100vh;
 }
 
 .content-wrapper {
