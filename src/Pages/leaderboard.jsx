@@ -14,7 +14,6 @@ export default function Leaderboard() {
                 const response = await fetch(`${API_BASE_URL}/api/leaderboard`);
                 const data = await response.json();
                 
-                
                 if (response.ok) {
                     setPlayers(data.players);
                 } else {
@@ -29,7 +28,7 @@ export default function Leaderboard() {
     }, []);
 
 	return (
-        <div className="leaderboard-page fade-in">
+        <div className="leaderboard-page">
             
             <img
                 src={playerLeft}
@@ -42,10 +41,10 @@ export default function Leaderboard() {
                 alt="Decoration Right"
             />
 
-            <div className="content-wrapper"></div>
+            <div className="content-wrapper" fade-in></div>
             <h1 className="page-title">Leaderboard</h1>
 
-            <div className="leaderboard-card slide-up">
+            <div className="leaderboard-card">
                 <table className="leaderboard-table">
                     <thead>
                         <tr>
