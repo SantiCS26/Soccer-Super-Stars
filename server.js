@@ -17,24 +17,6 @@
     stepGame
   } from "./src/Game/game_state.js";
 
-  const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-      cb(null, path.join(__dirname, "uploads"));
-    },
-    filename: (req, file, cb) => {
-      const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
-      cb(null, unique + path.extname(file.originalname));
-    }
-  });
-
-  const upload = multer({ storage });
-
-  import fs from "fs";
-  if (!fs.existsSync(path.join(__dirname, "uploads"))) {
-    fs.mkdirSync(path.join(__dirname, "uploads"));
-  }
-
-
   dotenv.config();
 
   const __filename = fileURLToPath(import.meta.url);
@@ -69,6 +51,23 @@
       host: PGHOST,
       port: PGPORT
     };
+  }
+
+  const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, path.join(__dirname, "uploads"));
+    },
+    filename: (req, file, cb) => {
+      const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      cb(null, unique + path.extname(file.originalname));
+    }
+  });
+
+  const upload = multer({ storage });
+
+  import fs from "fs";
+  if (!fs.existsSync(path.join(__dirname, "uploads"))) {
+    fs.mkdirSync(path.join(__dirname, "uploads"));
   }
 
 
