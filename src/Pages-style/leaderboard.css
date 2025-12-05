@@ -1,23 +1,117 @@
-.Leaderboard {
-    width: 100%;
-    height: 100vh;
+/* --- Page Layout --- */
+.leaderboard-page {
+    position: relative;
+    min-height: 100vh;
     display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    margin-top: 1rem    
+    flex-direction: column;
+    align-items: center;
+    padding: 100px 20px 40px;
+    overflow-x: hidden;
 }
 
-table {
-    border: 2px solid forestgreen;
-    width: 800px;
-    height: 200px;
-}
-
-th {
-    border-bottom: 1px solid black;
-}
-
-td {
+.page-title {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 40px;
     text-align: center;
-    border-bottom: 1px solid gray;
+    /* Matches your global gradient text style */
+    background: linear-gradient(135deg, var(--accent-color, #3b82f6), #a78bfa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* --- Positioning the Images --- */
+.player-deco {
+    position: fixed;
+    width: 300px;
+    opacity: 0.15;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.player-left {
+    left: -50px;
+    bottom: 0;
+}
+
+.player-right {
+    right: -50px;
+    top: 100px;
+}
+
+/* --- Leaderboard Card --- */
+.leaderboard-card {
+    width: 100%;
+    max-width: 800px;
+    background: var(--card-bg, rgba(30, 41, 59, 0.4));
+    border: 1px solid var(--card-border, rgba(255, 255, 255, 0.1));
+    border-radius: 16px;
+    box-shadow: var(--card-shadow, 0 4px 6px rgba(0,0,0,0.3));
+    padding: 20px;
+    backdrop-filter: blur(10px);
+}
+
+/* --- Table Styles --- */
+.leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    color: var(--text-primary, #f1f5f9);
+}
+
+.leaderboard-table th {
+    text-align: left;
+    padding: 16px;
+    border-bottom: 2px solid var(--card-border, rgba(255, 255, 255, 0.1));
+    color: var(--text-secondary, #94a3b8);
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+}
+
+.leaderboard-table td {
+    padding: 16px;
+    border-bottom: 1px solid var(--card-border, rgba(255, 255, 255, 0.05));
+    font-size: 1rem;
+}
+
+.leaderboard-table tr:last-child td {
+    border-bottom: none;
+}
+
+.leaderboard-table tr:hover {
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+/* --- Specific Cell Styles --- */
+.rank-cell {
+    font-weight: bold;
+    color: var(--accent-color, #3b82f6);
+    width: 80px;
+}
+
+.score-cell {
+    font-weight: bold;
+    text-align: right;
+}
+
+.leaderboard-table th:last-child {
+    text-align: right;
+}
+
+/* --- Mobile Responsiveness --- */
+@media (max-width: 1024px) {
+    .player-deco {
+        width: 150px;
+        opacity: 0.1;
+    }
+}
+
+@media (max-width: 768px) {
+    .player-deco {
+        display: none;
+    }
+    
+    .page-title {
+        font-size: 2rem;
+    }
 }
