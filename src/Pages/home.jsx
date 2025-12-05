@@ -3,11 +3,11 @@ import "../Pages-style/home.css";
 export default function Home() {
 
   return (
-    <div className="home-container fade-in">
+    <div className="home-container">
       
       <section className="hero-section">
         <div className="hero-content">
-          <div className="hero-text slide-up">
+          <div className="hero-text">
             <span className="badge">New Season Live ⚽</span>
             <h1 className="hero-title">
               Dominate the Pitch. <br />
@@ -20,7 +20,7 @@ export default function Home() {
             </p>
           </div>
           
-          <div className="hero-visual fade-in-slow">
+          <div className="hero-visual">
             <div className="stat-card floating">
               <div className="stat-header">Global Rank</div>
               <div className="stat-number">#1</div>
