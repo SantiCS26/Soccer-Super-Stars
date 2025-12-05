@@ -1,9 +1,14 @@
+* {
+    box-sizing: border-box;
+}
+
 /* --- Page Layout --- */
 .leaderboard-page {
     position: relative;
     min-height: 100vh;
     width: 100%;
     overflow-x: hidden;
+    background-color: var(--bg-color, #0f172a);
 }
 
 .content-wrapper {
@@ -14,6 +19,7 @@
     align-items: center;
     padding-top: 120px;
     padding-bottom: 60px;
+    width: 100%;
 }
 
 .page-title {
@@ -30,8 +36,7 @@
 /* --- Positioning the Images --- */
 .player-deco {
     position: fixed;
-    top: 50%;
-    transform: translateY(-50%);
+    bottom: 0;
     width: 300px;
     opacity: 0.15;
     z-index: -1;
@@ -39,18 +44,19 @@
 }
 
 .player-left {
-    left: 20px;
+    left: 0;
 }
 
 .player-right {
-    right: 20px;
-    transform: translateY(-50%) scaleX(-1);
+    right: 0;
+    transform: scaleX(-1);
 }
 
 /* --- Leaderboard Card --- */
 .leaderboard-card {
     width: 90%;
     max-width: 1200px;
+    margin: 0 auto;
     background: var(--card-bg, rgba(30, 41, 59, 0.4));
     border: 1px solid var(--card-border, rgba(255, 255, 255, 0.1));
     border-radius: 20px;
