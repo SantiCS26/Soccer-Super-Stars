@@ -148,7 +148,7 @@ export default function Dashboard() {
 						</>}
                     </div>
 
-                    <div>
+                    <div style={{ marginLeft: "auto" }}>
                         {isLoggedIn ? (
                             <button onClick={handleLogout} style={logoutButtonStyle}>
 								Logout

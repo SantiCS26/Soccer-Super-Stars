@@ -1,35 +1,4 @@
-/* --- Variables & Theming --- */
-:root {
-  /* Light Mode (Default) */
-  --bg-color: #f8fafc;
-  --text-primary: #1e293b;
-  --text-secondary: #475569;
-  --accent-color: #2563eb;
-  --accent-hover: #1d4ed8;
-  --card-bg: #ffffff;
-  --card-border: #e2e8f0;
-  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --hero-circle: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
-  --key-bg: #f1f5f9;
-  --key-shadow: #cbd5e1;
-}
 
-/* System Dark Mode Override */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-color: #0f172a;
-    --text-primary: #f1f5f9;
-    --text-secondary: #94a3b8;
-    --accent-color: #3b82f6;
-    --accent-hover: #60a5fa;
-    --card-bg: #1e293b;
-    --card-border: #334155;
-    --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-    --hero-circle: linear-gradient(135deg, #1e3a8a 0%, #172554 100%);
-    --key-bg: #334155;
-    --key-shadow: #0f172a;
-  }
-}
 
 /* --- Global Reset & Layout --- */
 body, html {
@@ -38,13 +7,11 @@ body, html {
   font-family: system-ui, -apple-system, sans-serif;
   background-color: var(--bg-color);
   color: var(--text-primary);
-  /* Use auto to allow scrolling if content is long */
   overflow-y: auto; 
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .home-container {
-  /* Padding top accounts for your fixed Dashboard navbar */
   padding-top: 100px; 
   padding-bottom: 60px;
   max-width: 1200px;
@@ -71,7 +38,7 @@ body, html {
 
 .hero-text {
   flex: 1;
-  text-align: left; /* Modern Left Align */
+  text-align: left;
 }
 
 .badge {
