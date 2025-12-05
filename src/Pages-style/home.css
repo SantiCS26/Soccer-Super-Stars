@@ -313,7 +313,6 @@ body, html {
 
 .slide-up {
   animation: slideUp 0.8s ease forwards;
-  opacity: 0;
 }
 
 .floating {
