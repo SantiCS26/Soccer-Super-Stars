@@ -25,32 +25,36 @@ export default function Leaderboard() {
 
         fetchLeaderboard();
     }, []);
-    
-	return (
-		<div className="pageWrapper">
-			<h1 className="pageTitle">Leaderboard</h1>
 
-            <div className="Leaderboard">
-                <table>
-                    <tbody>
-                        <tr>
-                            <th>Ranking #</th>
-                            <th>Username</th>
-                            <th>Score</th>
-                        </tr> 
-                    
-                    {players.map((value, key) => {
-                        return (
-                            <tr key={key}>
-                                <td>{key + 1}</td>
-                                <td>{value.username}</td>
-                                <td>{value.score}</td>
-                            </tr>
-                        )
-                    })}
-                    </tbody>
-                </table>
-            </div>
+	return (
+    <div className="flex flex-col items-center w-full min-h-screen bg-gray-900 text-white p-6">
+        <h1 className="text-4xl font-bold mb-8 tracking-wide">Leaderboard</h1>
+
+
+        <div className="w-full max-w-3xl bg-gray-800 p-6 rounded-2xl shadow-xl border border-gray-700">
+            <table className="w-full text-left border-collapse">
+                <thead>
+                    <tr className="border-b border-gray-700 text-gray-300 uppercase text-sm">
+                        <th className="py-3">Ranking #</th>
+                        <th className="py-3">Username</th>
+                        <th className="py-3">Score</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {players.map((value, key) => (
+                        <tr
+                        key={key}
+                        className="hover:bg-gray-700 transition-all duration-150"
+                        >
+                            <td className="py-3 font-semibold text-gray-200">{key + 1}</td>
+                            <td className="py-3 text-gray-300">{value.username}</td>
+                            <td className="py-3 text-gray-300">{value.score}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
         </div>
+    </div>
     );
 }

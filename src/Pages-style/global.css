@@ -1,3 +1,115 @@
+:root {
+  --bg: #f5f5f5;
+  --text: #222;
+  --card-bg: #ffffff;
+  --card-shadow: rgba(0, 0, 0, 0.08);
+  --accent: #2563eb;
+}
+
+[data-theme="dark"] {
+  --bg: #1b1b1b;
+  --text: #f5f5f5;
+  --card-bg: #2a2a2a;
+  --card-shadow: rgba(255, 255, 255, 0.08);
+  --accent: #3b82f6;
+}
+
+body, html {
+  background: var(--bg);
+  color: var(--text);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.dark-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: var(--accent);
+  border: none;
+  color: white;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: 0.2s ease;
+}
+
+.dark-toggle:hover {
+  opacity: 0.85;
+}
+
+.fade-in {
+  animation: fadeIn 0.8s ease forwards;
+  opacity: 0;
+}
+
+.fade-in-slow {
+  animation: fadeIn 1.4s ease forwards;
+  opacity: 0;
+}
+
+.slide-up {
+  animation: slideUp 0.9s ease forwards;
+  opacity: 0;
+}
+
+.lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.lift:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 14px 30px var(--card-shadow);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.control-icons {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.key, .arrow, .space-key {
+  background: var(--card-bg);
+  padding: 10px 14px;
+  border-radius: 8px;
+  box-shadow: 0 3px 10px var(--card-shadow);
+  font-weight: bold;
+  min-width: 40px;
+  text-align: center;
+  transition: 0.2s ease;
+}
+
+.key-row, .arrow-row {
+  display: flex;
+  gap: 10px;
+}
+
+.space-key {
+  padding: 10px 30px;
+}
+
+.or {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+.mode-card, .how-to-play {
+  background: var(--card-bg);
+  box-shadow: 0 6px 20px var(--card-shadow);
+}
+
 html, body {
 	margin: 0;
 	padding: 0;
