@@ -32,7 +32,7 @@ export default function Home() {
       </section>
 
       <section className="section-block">
-        <h2 className="section-header">Select Your Mode</h2>
+        <h2 className="section-header">Available Modes to Play</h2>
         <div className="grid-container">
           <div className="feature-card">
             <div className="icon">🏆</div>

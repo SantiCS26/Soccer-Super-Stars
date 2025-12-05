@@ -9,7 +9,8 @@ CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
-    score INT DEFAULT 0
+    score INT DEFAULT 0,
+    avatar_url TEXT DEFAULT '/default-avatar.png';
 );
 
 -- Insert some dummy users

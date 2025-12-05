@@ -1,32 +1,52 @@
+import { useState } from "react";
 import "../Pages-style/global.css";
 import "../Pages-style/profile.css";
 
 export default function Profile() {
+	const [avatar, setAvatar] = useState("/default-avatar.png");
+
+	async function handleAvatarChange(e) {
+		const file = e.target.files[0];
+		if (!file) return;
+
+		const previewUrl = URL.createObjectURL(file);
+		setAvatar(previewUrl);
+
+		const formData = new FormData();
+		formData.append("avatar", file);
+
+		const API_BASE_URL = import.meta.env.VITE_API_URL;
+
+		const res = await fetch(`${API_BASE_URL}/api/upload-avatar`, {
+			method: "POST",
+			credentials: "include",
+			body: formData,
+		});
+
+		const data = await res.json();
+
+		if (data.avatar) {
+			setAvatar(data.avatar);
+		}
+	}
+
+
 	return (
 		<div className="profileWrapper">
 
 			<div className="profileLeft">
 				<div className="avatarSection">
 					<label htmlFor="avatarUpload" className="avatarCircle">
-						<img
-							id="avatarPreview"
-							src="/default-avatar.png"
-							alt="Profile"
-						/>
+						<img src={avatar} alt="Profile" />
 						<div className="avatarOverlay">Change</div>
 					</label>
+
 					<input
 						id="avatarUpload"
 						type="file"
 						accept="image/*"
 						style={{ display: "none" }}
-						onChange={(e) => {
-							const file = e.target.files[0];
-							if (file) {
-								const url = URL.createObjectURL(file);
-								document.getElementById("avatarPreview").src = url;
-							}
-						}}
+						onChange={handleAvatarChange}
 					/>
 				</div>
 
