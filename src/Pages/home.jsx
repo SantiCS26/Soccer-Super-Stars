@@ -1,105 +1,92 @@
-import { useState, useEffect } from "react";
-import "../Pages-style/global.css";
-import { Link } from "react-router-dom";
+import "../Pages-style/home.css";
 
 export default function Home() {
-	const [darkMode, setDarkMode] = useState(false);
-
-	useEffect(() => {
-		const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-		setDarkMode(prefersDark);
-		document.documentElement.setAttribute("data-theme", prefersDark ? "dark" : "light");
-	}, []);
-
-	const toggleDark = () => {
-		const newMode = !darkMode;
-		setDarkMode(newMode);
-		document.documentElement.setAttribute("data-theme", newMode ? "dark" : "light");
-	};
-
 
   return (
-    <div className="home-container">
-
-      <button className="dark-toggle" onClick={toggleDark}>
-        {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
-      </button>
-
-      <section className="hero fade-in">
-        <h1 className="hero-title slide-up">⚽ Soccer Super Stars</h1>
-        <p className="hero-subtitle">
-          Master your skills. Compete globally. Become the superstar you were meant to be.
-        </p>
-
-      </section>
-
-      <section className="how-to-play fade-in">
-        <h2 className="section-title">🎮 How to Play</h2>
-
-        <ul className="info-list">
-          <li><strong>Match Duration:</strong> Games last 5 minutes.</li>
-
-          <li>
-            <strong>Controls:</strong>
-            <div className="control-icons">
-              <div className="key">W</div>
-              <div className="key-row">
-                <div className="key">A</div>
-                <div className="key">S</div>
-                <div className="key">D</div>
-              </div>
-
-              <span className="or">or</span>
-
-              <div className="arrows">
-                <div className="arrow">↑</div>
-                <div className="arrow-row">
-                  <div className="arrow">←</div>
-                  <div className="arrow">↓</div>
-                  <div className="arrow">→</div>
-                </div>
-              </div>
-
-              <div className="space-key">SPACE</div>
+    <div className="home-container fade-in">
+      
+      <section className="hero-section">
+        <div className="hero-content">
+          <div className="hero-text slide-up">
+            <span className="badge">New Season Live ⚽</span>
+            <h1 className="hero-title">
+              Dominate the Pitch. <br />
+              <span className="gradient-text">Become a Legend.</span>
+            </h1>
+            <p className="hero-subtitle">
+              Experience the fastest 1v1 soccer engine on the web. 
+              Master your mechanics, climb the global leaderboards, and prove 
+              you have what it takes to be a Super Star.
+            </p>
+          </div>
+          
+          <div className="hero-visual fade-in-slow">
+            <div className="stat-card floating">
+              <div className="stat-header">Global Rank</div>
+              <div className="stat-number">#1</div>
+              <div className="stat-label">Current Champion</div>
             </div>
-          </li>
-
-          <li><strong>Objective:</strong> Score more goals than your opponent.</li>
-          <li><strong>Modes:</strong> Competitive or Casual play.</li>
-        </ul>
-      </section>
-
-      <section className="modes fade-in">
-        <h2 className="section-title">⚔️ Game Modes</h2>
-
-        <div className="modes-grid">
-
-          <div className="mode-card lift">
-            <h3>🏆 Competitive Mode</h3>
-            <p>Ranked 1v1 matchmaking for serious players.</p>
+            <div className="visual-circle"></div>
           </div>
-
-          <div className="mode-card lift">
-            <h3>🎮 Casual Mode</h3>
-            <p>Quick, friendly matches with zero pressure.</p>
-          </div>
-
-          <div className="mode-card lift">
-            <h3>📅 Daily Challenges</h3>
-            <p>Earn bonus rewards for completing daily objectives.</p>
-          </div>
-
-          <div className="mode-card lift">
-            <h3>📊 Player Stats</h3>
-            <p>Track your wins, goals, streaks, and performance.</p>
-          </div>
-
         </div>
       </section>
 
-      <section className="footer-tagline fade-in-slow">
-        <p>Train hard. Play harder. Become a legend.</p>
+      <section className="section-block">
+        <h2 className="section-header">Select Your Mode</h2>
+        <div className="grid-container">
+          <div className="feature-card">
+            <div className="icon">🏆</div>
+            <h3>Competitive League</h3>
+            <p>Ranked 1v1 matchmaking. Win matches to gain ELO and unlock exclusive seasonal rewards.</p>
+          </div>
+
+          <div className="feature-card">
+            <div className="icon">🎮</div>
+            <h3>Casual Match</h3>
+            <p>Practice your mechanics or play against friends with zero pressure. No ELO loss.</p>
+          </div>
+        </div>
       </section>
+
+      <section className="section-block how-to-play">
+        <div className="content-split">
+          <div className="text-side">
+            <h2 className="section-header">Master Controls</h2>
+            <p>Precision is key. Use WASD or Arrow keys to maneuver. Spacebar to shoot. Hold Space for power shots.</p>
+            
+            <ul className="specs-list">
+              <li><strong>Match Time:</strong> 5 Minutes</li>
+              <li><strong>Overtime:</strong> Golden Goal</li>
+              <li><strong>Physics:</strong> Arcade Realism</li>
+            </ul>
+          </div>
+
+          <div className="controls-visual">
+            <div className="keyboard-layout">
+              <div className="key-group">
+                <div className="key">W</div>
+                <div className="row">
+                  <div className="key">A</div>
+                  <div className="key">S</div>
+                  <div className="key">D</div>
+                </div>
+                <div className="label">Movement</div>
+              </div>
+
+              <div className="divider"></div>
+
+              <div className="key-group">
+                <div className="space-key">SPACE</div>
+                <div className="label">Shoot / Sprint</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer className="home-footer">
+        <p>Soccer Super Stars &copy; 2025. Train hard. Play harder.</p>
+      </footer>
     </div>
   );
 }
