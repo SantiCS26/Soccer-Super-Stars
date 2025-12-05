@@ -42,6 +42,7 @@ export default function Leaderboard() {
                 alt="Decoration Right"
             />
 
+            <div className="content-wrapper"></div>
             <h1 className="page-title">Leaderboard</h1>
 
             <div className="leaderboard-card slide-up">
@@ -57,7 +58,9 @@ export default function Leaderboard() {
                     <tbody>
                         {players.map((value, key) => (
                             <tr key={key}>
-                                <td className="rank-cell">#{key + 1}</td>
+                                <td className="rank-cell">
+                                    <span className={`rank-badge rank-${key + 1}`}>#{key + 1}</span>
+                                </td>
                                 <td className="user-cell">{value.username}</td>
                                 <td className="score-cell">{value.score}</td>
                             </tr>
