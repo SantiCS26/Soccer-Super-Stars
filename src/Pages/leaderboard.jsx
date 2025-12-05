@@ -34,13 +34,13 @@ export default function Leaderboard() {
         <div className="hidden md:block absolute right-0 top-0 h-full w-40 bg-gradient-to-l from-gray-800/60 to-transparent pointer-events-none"></div>
 
         <img
-            src="/design_images/soccer-player-left.webp"
+            src="../../design_images/soccer-player-left.webp"
             className="hidden lg:block absolute left-0 bottom-10 w-48 opacity-25"
             alt="Player Left"
         />
 
         <img
-            src="/design_images/soccer-player-right.webp"
+            src="../../design_images/soccer-player-right.webp"
             className="hidden lg:block absolute right-0 top-10 w-48 opacity-25 scale-y-[-1]"
             alt="Player Right"
         />
