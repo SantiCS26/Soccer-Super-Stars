@@ -37,13 +37,13 @@ export default function Login() {
 
 	return (
 		<div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-			<div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
-				
-				<h1 className="text-2xl font-bold text-gray-800 text-center mb-6">
+			<div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-10 border border-gray-200">
+
+				<h1 className="text-3xl font-bold text-gray-900 text-center mb-8">
 					Welcome Back
 				</h1>
 
-				<form onSubmit={handleLogin} className="space-y-5">
+				<form onSubmit={handleLogin} className="space-y-6">
 
 					<div className="relative">
 						<User className="absolute left-3 top-3 text-gray-400" size={20} />
@@ -52,7 +52,7 @@ export default function Login() {
 							placeholder="Username"
 							value={username}
 							onChange={(e) => setUsername(e.target.value)}
-							className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+							className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
 							required
 						/>
 					</div>
@@ -64,12 +64,12 @@ export default function Login() {
 							placeholder="Password"
 							value={password}
 							onChange={(e) => setPassword(e.target.value)}
-							className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+							className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
 							required
-						/>
+                        />
 						<button
 							type="button"
-							className="absolute right-3 top-2.5 text-gray-500"
+							className="absolute right-3 top-3 text-gray-500"
 							onClick={() => setShowPassword(!showPassword)}
 						>
 							{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
@@ -79,14 +79,14 @@ export default function Login() {
 					<button
 						type="submit"
 						disabled={isLoading}
-						className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700 transition"
+						className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition"
 					>
 						<LogIn size={20} />
 						{isLoading ? "Logging in..." : "Login"}
 					</button>
 				</form>
 
-				<p className="text-center text-gray-600 text-sm mt-6">
+				<p className="text-center text-gray-600 text-sm mt-8">
 					Don't have an account?{" "}
 					<Link to="/register" className="text-blue-600 font-medium hover:underline">
 						Register here

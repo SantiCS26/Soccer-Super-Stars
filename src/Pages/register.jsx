@@ -55,15 +55,14 @@ export default function Register() {
 
 	return (
 		<div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-			<div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
-				
-				<h1 className="text-2xl font-bold text-gray-800 text-center mb-6">
+			<div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-10 border border-gray-200">
+
+				<h1 className="text-3xl font-bold text-gray-900 text-center mb-8">
 					Create an Account
 				</h1>
 
-				<form onSubmit={handleRegister} className="space-y-5">
+				<form onSubmit={handleRegister} className="space-y-6">
 
-					{/* Username */}
 					<div className="relative">
 						<User className="absolute left-3 top-3 text-gray-400" size={20} />
 						<input
@@ -71,12 +70,11 @@ export default function Register() {
 							placeholder="Username"
 							value={username}
 							onChange={(e) => setUsername(e.target.value)}
-							className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+							className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
 							required
 						/>
 					</div>
 
-					{/* Password */}
 					<div className="relative">
 						<Lock className="absolute left-3 top-3 text-gray-400" size={20} />
 						<input
@@ -84,12 +82,11 @@ export default function Register() {
 							placeholder="Password"
 							value={password}
 							onChange={(e) => setPassword(e.target.value)}
-							className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+							className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
 							required
 						/>
 					</div>
 
-					{/* Confirm Password */}
 					<div className="relative">
 						<Lock className="absolute left-3 top-3 text-gray-400" size={20} />
 						<input
@@ -97,33 +94,29 @@ export default function Register() {
 							placeholder="Confirm Password"
 							value={confirmPassword}
 							onChange={(e) => setConfirmPassword(e.target.value)}
-							className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+							className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
 							required
 						/>
-
-						{/* Show Password Toggle */}
 						<button
 							type="button"
-							className="absolute right-3 top-2.5 text-gray-500"
+							className="absolute right-3 top-3 text-gray-500"
 							onClick={() => setShowPassword(!showPassword)}
 						>
 							{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
 						</button>
 					</div>
 
-					{/* Register Button */}
 					<button
 						type="submit"
 						disabled={isLoading}
-						className="w-full flex items-center justify-center gap-2 bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700 transition"
+						className="w-full flex items-center justify-center gap-2 bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition"
 					>
 						<UserPlus size={20} />
 						{isLoading ? "Creating Account..." : "Register"}
 					</button>
 				</form>
 
-				{/* Login Link */}
-				<p className="text-center text-gray-600 text-sm mt-6">
+				<p className="text-center text-gray-600 text-sm mt-8">
 					Already have an account?{" "}
 					<Link to="/" className="text-blue-600 font-medium hover:underline">
 						Login here
