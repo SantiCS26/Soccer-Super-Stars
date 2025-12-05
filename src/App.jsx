@@ -5,6 +5,8 @@ import Home from "./Pages/home";
 import Game from "./Pages/game";
 import Leaderboard from "./Pages/leaderboard";
 import Profile from "./Pages/profile";
+import Login from "./Pages/login";
+import Register from "./Pages/register";
 
 function Layout({ children }) {
 	const location = useLocation();
@@ -27,6 +29,8 @@ function App() {
 					<Route path="/game" element={<Game />} />
 					<Route path="/leaderboard" element={<Leaderboard />} />
 					<Route path="/profile" element={<Profile />} />
+					<Route path="/login" element={<Login />} />
+					<Route path="/register" element={<Register />} />
 				</Routes>
 			</Layout>
 		</Router>

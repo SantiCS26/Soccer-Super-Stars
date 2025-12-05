@@ -1,12 +1,8 @@
 import { useEffect, useState } from "react";
-import LoginWindow from "../components/login_window";
-import RegisterWindow from "../components/register_window";
 import { NavLink, useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
 	const [isLoggedIn, setIsLoggedIn] = useState(false);
-	const [showLogin, setShowLogin] = useState(false);
-	const [showRegister, setShowRegister] = useState(false);
 
 	const navigate = useNavigate();
 	
@@ -46,12 +42,6 @@ export default function Dashboard() {
 		color: "rgba(255,255,255,0.4)",
 		fontSize: "16px",
 	};
-
-	const linksGroupStyle = {
-        display: "flex",
-        gap: "24px",
-        alignItems: "center",
-    };
 
 	const buttonStyle = {
         padding: "8px 16px",
@@ -148,42 +138,21 @@ export default function Dashboard() {
 						</>}
                     </div>
 
-                    <div style={{ marginLeft: "auto" }}>
+                    <div style={authContainerStyle}>
                         {isLoggedIn ? (
                             <button onClick={handleLogout} style={logoutButtonStyle}>
-								Logout
-							</button>
-							) : (
-							<button onClick={() => setShowLogin(true)} style={loginButtonStyle}>
-								Login
-							</button>
-							)}
+                                Logout
+                            </button>
+                        ) : (
+                            <NavLink to="/login" style={loginButtonStyle}>
+                                Login / Register
+                            </NavLink>
+                        )}
                     </div>
                 </div>
             </nav>
 
             <div style={{ height: "64px" }}></div>
-
-            {showLogin && (
-                <LoginWindow
-                    onClose={() => setShowLogin(false)}
-                    onSuccess={() => setIsLoggedIn(true)}
-                    onSwitchToRegister={() => {
-                        setShowLogin(false);
-                        setShowRegister(true);
-                    }}
-                />
-            )}
-
-            {showRegister && (
-                <RegisterWindow
-                    onClose={() => setShowRegister(false)}
-                    onSwitchToLogin={() => {
-                        setShowRegister(false);
-                        setShowLogin(true);
-                    }}
-                />
-            )}
         </>
 	);
 }

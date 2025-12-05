@@ -1,60 +1,115 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Input from "../components/input";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
-	const [username, setusername] = useState("");
+	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
+	const [showPassword, setShowPassword] = useState(false);
+	const [error, setError] = useState(null);
+	const [isLoading, setIsLoading] = useState(false);
 	const navigate = useNavigate();
 
 	const handleLogin = async (e) => {
-	e.preventDefault();
-	try {
-		const API_BASE_URL = import.meta.env.VITE_API_URL;
-		console.log("API BASE URL: ", API_BASE_URL);
+		e.preventDefault();
+		try {
+			const API_BASE_URL = import.meta.env.VITE_API_URL;
+			console.log("API BASE URL: ", API_BASE_URL);
 
-		const response = await fetch(`${API_BASE_URL}/api/login`, {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ username, password }),
-		});
+			const response = await fetch(`${API_BASE_URL}/api/login`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ username, password }),
+			});
 
-		const data = await response.json();
-		if (response.ok) {
-			alert("Login successful!");
-			navigate("/home");
-		} else {
-			alert(data.message);
-		}
+			const data = await response.json();
+			if (response.ok) {
+				alert("Login successful!");
+				navigate("/home");
+			} else {
+				alert(data.message);
+			}
 		} catch (error) {
-			    console.log("Body being sent: ", JSON.stringify({ username, password }));
-				console.error("Error logging in:", error);
+			console.log("Body being sent: ", JSON.stringify({ username, password }));
+			console.error("Error logging in:", error);
 		}
 	};
 
 
 	return (
-		<div className="w-full max-w-sm bg-white p-8 rounded-2xl shadow-lg">
-			<h2 className="text-2xl font-semibold text-center mb-6">Login</h2>
-			<form onSubmit={handleLogin}>
-				<Input label="username" type="username" value={username} onChange={(e) => setusername(e.target.value)} />
-				<Input label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+		<div className="min-h-screen flex items-center justify-center bg-gray-50 px-4 sm:px-6 lg:px-8">
+			<div className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-xl">
+				<div className="text-center">
+					<h2 className="mt-2 text-3xl font-bold text-gray-900">Welcome back</h2>
+					<p className="mt-2 text-sm text-gray-600">Please sign in to your account</p>
+				</div>
 
-				<button
-					type="submit"
-					className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
-				>
-					Login
-				</button>
+				<form className="mt-8 space-y-6" onSubmit={handleLogin}>
+					<div className="space-y-4">
+						<div>
+							<label htmlFor="username" className="block text-sm font-medium text-gray-700">Username</label>
+							<div className="mt-1">
+								<input
+									id="username"
+									name="username"
+									type="text"
+									required
+									value={username}
+									onChange={(e) => setUsername(e.target.value)}
+									className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+									placeholder="Enter your username"
+								/>
+							</div>
+						</div>
 
-			</form>
+						<div>
+							<label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+							<div className="mt-1 relative">
+								<input
+									id="password"
+									name="password"
+									type={showPassword ? "text" : "password"}
+									required
+									value={password}
+									onChange={(e) => setPassword(e.target.value)}
+									className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+									placeholder="Enter your password"
+								/>
+								<button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none"
+                                >
+                                    {showPassword ? (
+                                        <EyeOff className="h-5 w-5" aria-hidden="true" />
+                                    ) : (
+                                        <Eye className="h-5 w-5" aria-hidden="true" />
+                                    )}
+                                </button>
+							</div>
+						</div>
+					</div>
 
-			<p className="text-sm text-center text-gray-600 mt-4">
-				Don’t have an account?{" "}
-				<Link to="/register" className="text-blue-600 hover:underline">
-					Register
-				</Link>
-			</p>
+					{error && (
+						<div className="text-red-500 text-sm text-center bg-red-50 p-2 rounded-lg border border-red-100">{error}</div>
+					)}
+
+					<button
+						type="submit"
+						disabled={isLoading}
+						className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white 
+						${isLoading ? "bg-blue-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"} 
+						transition-colors duration-200`}
+					>
+						{isLoading ? "Signing in..." : "Sign in"}
+					</button>
+
+					<div className="flex items-center justify-between text-sm">
+						<div className="text-gray-500">Don't have an account?</div>
+						<Link to="/register" className="font-medium text-blue-600 hover:text-blue-500 hover:underline">Create an account</Link>
+					</div>
+				</form>
+			</div>
 		</div>
 	);
 }

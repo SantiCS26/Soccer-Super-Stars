@@ -38,12 +38,12 @@
 }
 
 .player-left {
-    left: 20px;
+    left: 50px;
     transform: translateY(-50%);
 }
 
 .player-right {
-    right: 20px;
+    right: 50px;
     transform: translateY(-50%) scaleX(-1);
 }
 
