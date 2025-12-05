@@ -28,7 +28,7 @@ export default function Leaderboard() {
     }, []);
 
 	return (
-        <div className="leaderboard-page">
+        <div>
             
             <img
                 src={playerLeft}
