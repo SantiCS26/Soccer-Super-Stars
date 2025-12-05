@@ -167,29 +167,6 @@
       return res.json({ valid: false });
   });
 
-  app.post("/api/upload-avatar", authorize, upload.single("avatar"), async (req, res) => {
-    const { token } = req.cookies;
-    const username = tokenStorage[token];
-
-    if (!req.file) {
-        return res.status(400).json({ message: "No file uploaded" });
-    }
-
-    const filePath = `/uploads/${req.file.filename}`;
-
-    try {
-        await pool.query(
-            "UPDATE users SET avatar_url = $1 WHERE username = $2",
-            [filePath, username]
-        );
-
-        return res.json({ message: "Avatar updated", avatar: filePath });
-    } catch (err) {
-        console.error("Avatar update error:", err);
-        return res.status(500).json({ message: "Server error saving avatar" });
-    }
-});
-
   app.post("/api/register", async (req, res) => {
     const { username, password } = req.body;
 
@@ -271,6 +248,29 @@
     });
     return res.sendStatus(200);
   });
+
+  app.post("/api/upload-avatar", authorize, upload.single("avatar"), async (req, res) => {
+    const { token } = req.cookies;
+    const username = tokenStorage[token];
+
+    if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const filePath = `/uploads/${req.file.filename}`;
+
+    try {
+        await pool.query(
+            "UPDATE users SET avatar_url = $1 WHERE username = $2",
+            [filePath, username]
+        );
+
+        return res.json({ message: "Avatar updated", avatar: filePath });
+    } catch (err) {
+        console.error("Avatar update error:", err);
+        return res.status(500).json({ message: "Server error saving avatar" });
+    }
+});
 
   function tryMatchCompetitivePlayers() {
       if (competitiveQueue.length < 2) return null;
