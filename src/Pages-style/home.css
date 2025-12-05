@@ -27,7 +27,7 @@ body, html {
 }
 
 .home-container {
-  padding-top: 10000px; 
+  padding-top: 100px; 
   padding-bottom: 60px;
   justify-content: flex-start;
   max-width: 1200px;
