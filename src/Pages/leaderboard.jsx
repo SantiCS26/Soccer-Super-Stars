@@ -29,16 +29,7 @@ export default function Leaderboard() {
     }, []);
 
 	return (
-    <div className="flex flex-col items-center w-full min-h-screen bg-gray-900 text-white p-6">
-
-        <h1 className="text-4xl font-bold mb-8 tracking-wide">Leaderboard</h1>
-
-
-        <div className="w-full max-w-3xl bg-gray-800 p-6 rounded-2xl shadow-xl border border-gray-700">
-
-            <div className="hidden md:block absolute left-0 top-0 h-full w-40 bg-gradient-to-r from-gray-800/60 to-transparent pointer-events-none"></div>
-
-            <div className="hidden md:block absolute right-0 top-0 h-full w-40 bg-gradient-to-l from-gray-800/60 to-transparent pointer-events-none"></div>
+        <div className="relative w-full min-h-screen flex flex-col items-center bg-gray-900 text-white p-6">
 
             <img
                 src={playerLeft}
@@ -52,29 +43,33 @@ export default function Leaderboard() {
                 alt="Player Right"
             />
 
-            <table className="w-full text-left border-collapse">
-                <thead>
-                    <tr className="border-b border-gray-700 text-gray-300 uppercase text-sm">
-                        <th className="py-3">Ranking #</th>
-                        <th className="py-3">Username</th>
-                        <th className="py-3">Score</th>
-                    </tr>
-                </thead>
+            <h1 className="text-4xl font-bold mb-8 tracking-wide">Leaderboard</h1>
 
-                <tbody>
-                    {players.map((value, key) => (
-                        <tr
-                        key={key}
-                        className="hover:bg-gray-700 transition-all duration-150"
-                        >
-                            <td className="py-3 font-semibold text-gray-200">{key + 1}</td>
-                            <td className="py-3 text-gray-300">{value.username}</td>
-                            <td className="py-3 text-gray-300">{value.score}</td>
+            <div className="w-full max-w-3xl bg-gray-800 p-6 rounded-2xl shadow-xl border border-gray-700">
+
+                <table className="w-full text-left border-collapse">
+                    <thead>
+                        <tr className="border-b border-gray-700 text-gray-300 uppercase text-sm">
+                            <th className="py-3">Ranking #</th>
+                            <th className="py-3">Username</th>
+                            <th className="py-3">Score</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+
+                    <tbody>
+                        {players.map((value, key) => (
+                            <tr
+                            key={key}
+                            className="hover:bg-gray-700 transition-all duration-150"
+                            >
+                                <td className="py-3 font-semibold text-gray-200">{key + 1}</td>
+                                <td className="py-3 text-gray-300">{value.username}</td>
+                                <td className="py-3 text-gray-300">{value.score}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
-    </div>
     );
 }
