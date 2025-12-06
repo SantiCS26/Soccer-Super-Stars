@@ -149,6 +149,34 @@
       }
   });
 
+  app.get("/api/profileData", async (req, res) => {
+    try {
+      const token = req.cookies.token;
+      if (!token || !tokenStorage[token]) {
+        return res.json({ success: false });
+      }
+
+      const username = tokenStorage[token];
+
+      const result = await pool.query(
+        "SELECT username FROM users WHERE username = $1",
+        [username]
+      );
+
+      if (result.rows.length === 0)
+      return res.json({ success: false });
+
+    return res.json({
+      success: true,
+      playername: result.rows[0].username
+    });
+
+    } catch (err) {
+      console.error("Leaderboard error:", err);
+      return res.status(500).json({ message: "Server error loading leaderboard" });
+    }
+  });
+
   app.post("/create", (req, res) => {
     const roomId = generateRoomCode();
     return res.json({ roomId });
