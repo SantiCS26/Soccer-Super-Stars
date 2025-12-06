@@ -152,7 +152,6 @@
 
   app.get("/api/profileData", async (req, res) => {
     try {
-
       const token = req.cookies.token;
       if (!token) return res.json({ success: false });
 
@@ -163,7 +162,14 @@
         [decoded.userId]
       );
 
-        return res.json({ players: result.rows });
+      if (result.rows.length === 0)
+      return res.json({ success: false });
+
+    return res.json({
+      success: true,
+      playername: result.rows[0].username
+    });
+
     } catch (err) {
       console.error("Leaderboard error:", err);
       return res.status(500).json({ message: "Server error loading leaderboard" });
