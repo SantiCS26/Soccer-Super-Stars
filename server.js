@@ -10,7 +10,6 @@
   import { Server } from "socket.io";
   import crypto from "crypto";
   import cookieParser from "cookie-parser";
-  import jwt from "jsonwebtoken";
   import {
     createInitialGameState,
     updatePlayerPosition,
@@ -153,13 +152,15 @@
   app.get("/api/profileData", async (req, res) => {
     try {
       const token = req.cookies.token;
-      if (!token) return res.json({ success: false });
+      if (!token || !tokenStorage[token]) {
+        return res.json({ success: false });
+      }
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const username = tokenStorage[token];
 
       const result = await pool.query(
-        "SELECT username FROM users WHERE id = $1",
-        [decoded.userId]
+        "SELECT username FROM users WHERE username = $1",
+        [username]
       );
 
       if (result.rows.length === 0)
