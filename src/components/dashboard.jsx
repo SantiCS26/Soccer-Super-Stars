@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useLocation } from "react-router-dom";
 
 export default function Dashboard() {
 	const [isLoggedIn, setIsLoggedIn] = useState(false);
 
 	const navigate = useNavigate();
+	const location = useLocation();
 	
 	const navBarStyle = {
         position: "fixed",
@@ -103,7 +104,7 @@ export default function Dashboard() {
         };
 
         checkLogin();
-    }, []);
+    }, [location]);
 
 	const handleLogout = async () => {
 		try {
