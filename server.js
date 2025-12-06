@@ -10,6 +10,7 @@
   import { Server } from "socket.io";
   import crypto from "crypto";
   import cookieParser from "cookie-parser";
+  import jwt from "jsonwebtoken";
   import {
     createInitialGameState,
     updatePlayerPosition,
@@ -147,6 +148,26 @@
           console.error("Leaderboard error:", err);
           return res.status(500).json({ message: "Server error loading leaderboard" });
       }
+  });
+
+  app.get("/api/profileData", async (req, res) => {
+    try {
+
+      const token = req.cookies.token;
+      if (!token) return res.json({ success: false });
+
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+      const result = await pool.query(
+        "SELECT username FROM users WHERE id = $1",
+        [decoded.userId]
+      );
+
+        return res.json({ players: result.rows });
+    } catch (err) {
+      console.error("Leaderboard error:", err);
+      return res.status(500).json({ message: "Server error loading leaderboard" });
+    }
   });
 
   app.post("/create", (req, res) => {
