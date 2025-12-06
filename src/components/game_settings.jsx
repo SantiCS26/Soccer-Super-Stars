@@ -1,5 +1,4 @@
 import { useState } from "react";
-
 import "../Pages-style/game_settings.css"
 
 export default function GameSettings({ onHost, onJoin }) {
@@ -31,6 +30,26 @@ export default function GameSettings({ onHost, onJoin }) {
 		onJoin(trimmed);
 	};
 
+	async function onJoinCompetitive() {
+		const res = await fetch("https://soccer-super-stars.fly.dev/join", {
+			method: "POST",
+			credentials: "include"
+		});
+
+		const data = await res.json();
+
+		if (data.matched) {
+			onJoin(data.roomId);
+		} else {
+			alert("Waiting for another player with similar skill…");
+		}
+	}
+
+	const onJoinCasual = () => {
+		onJoin("RANDOM_CASUAL");
+	};
+
+
 	return (
 		<div className="settingsBox">
 			<h3 className="settingsLabel">Create a Lobby</h3>
@@ -59,6 +78,24 @@ export default function GameSettings({ onHost, onJoin }) {
 					onClick={handleJoinClick}
 				>
 					Join Game
+				</button>
+			</div>
+
+			<div className="settingsGroup randomGroup">
+				<h3 className="settingsLabel">Or Join Random Match</h3>
+
+				<button
+					className="settingsButton randomCompetitive"
+					onClick={onJoinCompetitive}
+				>
+					Competitive Match
+				</button>
+
+				<button
+					className="settingsButton randomCasual"
+					onClick={onJoinCasual}
+				>
+					Casual Match
 				</button>
 			</div>
 		</div>

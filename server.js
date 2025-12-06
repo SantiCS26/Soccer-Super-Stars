@@ -1,457 +1,612 @@
-import express from "express";
-import cors from "cors";
-import pkg from "pg";
-import bcrypt from "bcrypt";
-import dotenv from "dotenv";
-import path from "path";
-import { fileURLToPath } from "url";
-import http from "http";
-import { Server } from "socket.io";
-import crypto from "crypto";
-import cookieParser from "cookie-parser";
-import {
-	createInitialGameState,
-	updatePlayerPosition,
-	applyKick,
-	stepGame
-} from "./src/Game/game_state.js";
+  import express from "express";
+  import multer from "multer";
+  import cors from "cors";
+  import pkg from "pg";
+  import bcrypt from "bcrypt";
+  import dotenv from "dotenv";
+  import path from "path";
+  import { fileURLToPath } from "url";
+  import http from "http";
+  import { Server } from "socket.io";
+  import crypto from "crypto";
+  import cookieParser from "cookie-parser";
+  import {
+    createInitialGameState,
+    updatePlayerPosition,
+    applyKick,
+    stepGame
+  } from "./src/Game/game_state.js";
+
+  dotenv.config();
+
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+
+  const PORT = process.env.PORT || 3000;
+  const { Pool } = pkg; 
+  let host;
+  let databaseConfig;
+  let rooms = {};
+  let tokenStorage = {};
+  let competitiveQueue = []; 
 
 
-dotenv.config();
+  const DEFAULT_SETTINGS = {
+    matchDurationSec: 180,
+    goalLimit: 5
+  };
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+  const PHYSICS_TICK_MS = 1000 / 60;
 
-const PORT = process.env.PORT || 3000;
-const { Pool } = pkg; 
-let host;
-let databaseConfig;
-let rooms = {};
-let tokenStorage = {};
+  if (process.env.FLY_APP_NAME) {
+    host = "0.0.0.0";
+    databaseConfig = { connectionString: process.env.DATABASE_URL };
+  } else {
+    host = "localhost";
+    let { PGUSER, PGPASSWORD, PGDATABASE, PGHOST, PGPORT } = process.env;
+    databaseConfig = {
+      user: PGUSER,
+      password: PGPASSWORD,
+      database: PGDATABASE,
+      host: PGHOST,
+      port: PGPORT
+    };
+  }
 
-const DEFAULT_SETTINGS = {
-	matchDurationSec: 180,
-	goalLimit: 5
-};
-
-const PHYSICS_TICK_MS = 1000 / 60;
-
-if (process.env.FLY_APP_NAME) {
-	host = "0.0.0.0";
-	databaseConfig = { connectionString: process.env.DATABASE_URL };
-} else {
-	host = "localhost";
-	let { PGUSER, PGPASSWORD, PGDATABASE, PGHOST, PGPORT } = process.env;
-	databaseConfig = {
-		user: PGUSER,
-		password: PGPASSWORD,
-		database: PGDATABASE,
-		host: PGHOST,
-		port: PGPORT
-	};
-}
-
-
-let app = express();
-
-const server = http.createServer(app);
-const io = new Server(server, {
-	cors: {
-		origin: ["http://localhost:5173", "https://soccer-super-stars.fly.dev"],
-		methods: ["GET", "POST"],
-	}
-});
-
-app.use(cors({
-	origin: ["http://localhost:5173", "https://soccer-super-stars.fly.dev"],
-	methods: ["GET","POST","OPTIONS"],
-	allowedHeaders: ["Content-Type"],
-	credentials: true
-}));
-app.use(cookieParser());
-app.use(express.json());
-
-const pool = new Pool(databaseConfig);
-
-(async () => {
-    try {
-        await pool.query("SELECT NOW()");
-        console.log("Database connection verified.");
-    } catch (err) {
-        console.error("Database connection failed:", err);
-        process.exit(1);
+  const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, path.join(__dirname, "uploads"));
+    },
+    filename: (req, file, cb) => {
+      const unique = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      cb(null, unique + path.extname(file.originalname));
     }
-})();
+  });
 
-function makeToken() {
-	return crypto.randomBytes(32).toString("hex");
-}
+  const upload = multer({ storage });
 
-
-let cookieOptions = {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-};
+  import fs from "fs";
+  if (!fs.existsSync(path.join(__dirname, "uploads"))) {
+    fs.mkdirSync(path.join(__dirname, "uploads"));
+  }
 
 
-function generateRoomCode() {
-	let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	let result = "";
-	for (let i = 0; i < 4; i++) {
-		result += characters.charAt(Math.floor(Math.random() * characters.length));
-	}
-	return result;
-}
+  let app = express();
 
-// for debugging
-function printRooms() {
-	for (let [roomId, sockets] of Object.entries(rooms)) {
-		console.log(roomId);
-		for (let [socketId, socket] of Object.entries(sockets)) {
-			console.log(`\t${socketId}`);
-		}
-	}
-}
-
-app.get("/api/leaderboard", async (req, res) => {
-    try {
-        const result = await pool.query(`
-            SELECT username, score
-            FROM users
-            ORDER BY score DESC
-            LIMIT 50
-        `);
-
-        return res.json({ players: result.rows });
-    } catch (err) {
-        console.error("Leaderboard error:", err);
-        return res.status(500).json({ message: "Server error loading leaderboard" });
+  const server = http.createServer(app);
+  const io = new Server(server, {
+    cors: {
+      origin: ["http://localhost:5173", "https://soccer-super-stars.fly.dev"],
+      methods: ["GET", "POST"],
     }
-});
+  });
 
-app.post("/create", (req, res) => {
-	const roomId = generateRoomCode();
-	return res.json({ roomId });
-});
+  app.use(cors({
+    origin: ["http://localhost:5173", "https://soccer-super-stars.fly.dev"],
+    methods: ["GET","POST","OPTIONS"],
+    allowedHeaders: ["Content-Type"],
+    credentials: true
+  }));
+  app.use(cookieParser());
+  app.use(express.json());
 
-app.post("/api/register", async (req, res) => {
-	const { username, password } = req.body;
+  const pool = new Pool(databaseConfig);
 
-	try {
-		const testResult = await pool.query(`SELECT * FROM users`);
-		console.log("THIS IS A TEST:\n\n\n\n", testResult.rows);
+  (async () => {
+      try {
+          await pool.query("SELECT NOW()");
+          console.log("Database connection verified.");
+      } catch (err) {
+          console.error("Database connection failed:", err);
+          process.exit(1);
+      }
+  })();
 
-		const existing = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
-		if (existing.rows.length > 0) {
-			return res.status(400).json({ message: "User already exists" });
-		}
+  function makeToken() {
+    return crypto.randomBytes(32).toString("hex");
+  }
 
-		const hashed = await bcrypt.hash(password, 10);
-		await pool.query("INSERT INTO users (username, password) VALUES ($1, $2)", [username, hashed]);
 
-    const token = makeToken();
-    tokenStorage[token] = username;
+  let cookieOptions = {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+  };
 
-		res.cookie("token", token, cookieOptions);
-    return res.status(201).json({ message: "User registered & logged in" });
-	} catch (err) {
-		console.error("Registration error:", err);
-		return res.status(500).json({ message: "Server error" });
-	}
-});
 
-app.post("/api/login", async (req, res) => {
-	const { username, password } = req.body;
+  function generateRoomCode() {
+    let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let result = "";
+    for (let i = 0; i < 4; i++) {
+      result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return result;
+  }
 
-	try {
-		const result = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
-		if (result.rows.length === 0) {
-			return res.status(401).json({ message: "Invalid username or password" });
-		}
+  // for debugging
+  function printRooms() {
+    for (let [roomId, sockets] of Object.entries(rooms)) {
+      console.log(roomId);
+      for (let [socketId, socket] of Object.entries(sockets)) {
+        console.log(`\t${socketId}`);
+      }
+    }
+  }
 
-		const user = result.rows[0];
-		const valid = await bcrypt.compare(password, user.password);
+  app.get("/api/leaderboard", async (req, res) => {
+      try {
+          const result = await pool.query(`
+              SELECT username, score
+              FROM users
+              ORDER BY score DESC
+              LIMIT 50
+          `);
 
-		if (!valid) {
-			return res.status(401).json({ message: "Invalid username or password" });
-		}
+          return res.json({ players: result.rows });
+      } catch (err) {
+          console.error("Leaderboard error:", err);
+          return res.status(500).json({ message: "Server error loading leaderboard" });
+      }
+  });
 
-		let token = makeToken();
-    tokenStorage[token] = username;
+  app.post("/create", (req, res) => {
+    const roomId = generateRoomCode();
+    return res.json({ roomId });
+  });
 
-    res.cookie("token", token, cookieOptions);
-    return res.status(200).json({
-		message: "Login successful",
-		user: { username: user.username }
+  app.get("/api/validate-token", (req, res) => {
+      const { token } = req.cookies;
+
+      if (token && tokenStorage[token]) {
+          return res.json({ 
+              valid: true, 
+              username: tokenStorage[token] 
+          });
+      }
+
+      return res.json({ valid: false });
+  });
+
+  app.post("/api/register", async (req, res) => {
+    const { username, password } = req.body;
+
+    try {
+      const testResult = await pool.query(`SELECT * FROM users`);
+      console.log("THIS IS A TEST:\n\n\n\n", testResult.rows);
+
+      const existing = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
+      if (existing.rows.length > 0) {
+        return res.status(400).json({ message: "User already exists" });
+      }
+
+      const hashed = await bcrypt.hash(password, 10);
+      await pool.query("INSERT INTO users (username, password) VALUES ($1, $2)", [username, hashed]);
+
+      const token = makeToken();
+      tokenStorage[token] = username;
+
+      res.cookie("token", token, cookieOptions);
+      return res.status(201).json({ message: "User registered & logged in" });
+    } catch (err) {
+      console.error("Registration error:", err);
+      return res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  app.post("/api/login", async (req, res) => {
+    const { username, password } = req.body;
+
+    try {
+      const result = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
+      if (result.rows.length === 0) {
+        return res.status(401).json({ message: "Invalid username or password" });
+      }
+
+      const user = result.rows[0];
+      const valid = await bcrypt.compare(password, user.password);
+
+      if (!valid) {
+        return res.status(401).json({ message: "Invalid username or password" });
+      }
+
+      let token = makeToken();
+      tokenStorage[token] = username;
+
+      res.cookie("token", token, cookieOptions);
+      return res.status(200).json({
+      message: "Login successful",
+      user: { username: user.username }
+      });
+    } catch (err) {
+      console.error("Login error:", err);
+      return res.status(500).json({ message: "Server error" });
+    }
+  });
+
+  let authorize = (req, res, next) => {
+    let { token } = req.cookies;
+    console.log(token, tokenStorage);
+    if (token === undefined || !tokenStorage.hasOwnProperty(token)) {
+      return res.sendStatus(403); // TODO
+    }
+    next();
+  };
+
+  app.post("/api/logout", (req, res) => {
+    const { token } = req.cookies;
+
+    if (!token || !tokenStorage[token]) {
+      return res.sendStatus(400);
+    }
+
+    delete tokenStorage[token];
+    res.cookie("token", "", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+      expires: new Date(0)
     });
-	} catch (err) {
-		console.error("Login error:", err);
-		return res.status(500).json({ message: "Server error" });
-	}
+    return res.sendStatus(200);
+  });
+
+  app.post("/api/upload-avatar", authorize, upload.single("avatar"), async (req, res) => {
+    const { token } = req.cookies;
+    const username = tokenStorage[token];
+
+    if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+    }
+
+    const filePath = `/uploads/${req.file.filename}`;
+
+    try {
+        await pool.query(
+            "UPDATE users SET avatar_url = $1 WHERE username = $2",
+            [filePath, username]
+        );
+
+        return res.json({ message: "Avatar updated", avatar: filePath });
+    } catch (err) {
+        console.error("Avatar update error:", err);
+        return res.status(500).json({ message: "Server error saving avatar" });
+    }
 });
 
-let authorize = (req, res, next) => {
-	let { token } = req.cookies;
-	console.log(token, tokenStorage);
-	if (token === undefined || !tokenStorage.hasOwnProperty(token)) {
-		return res.sendStatus(403); // TODO
-	}
-	next();
-};
+  function tryMatchCompetitivePlayers() {
+      if (competitiveQueue.length < 2) return null;
 
-app.post("/api/logout", (req, res) => {
-	const { token } = req.cookies;
+      competitiveQueue.sort((a, b) => a.score - b.score);
 
-	if (!token || !tokenStorage[token]) {
-		return res.sendStatus(400);
-	}
+      for (let i = 0; i < competitiveQueue.length - 1; i++) {
+          const p1 = competitiveQueue[i];
+          const p2 = competitiveQueue[i + 1];
 
-	delete tokenStorage[token];
-	res.cookie("token", "", {
-		httpOnly: true,
-		secure: true,
-		sameSite: "none",
-		expires: new Date(0)
-	});
-	return res.sendStatus(200);
-});
+          const difference = Math.abs(p1.score - p2.score);
 
-app.get("/public", (req, res) => res.send("THIS IS PUBLIC\n"));
-app.get("/private", authorize, (req, res) => res.send("THIS IS PRIVATE\n"));
+          if (difference <= 150) {
+              const roomId = generateRoomCode();
+              rooms[roomId] = {
+                  settings: { matchDurationSec: 180, goalLimit: 5 },
+                  players: {},
+                  game: null
+              };
 
-app.use(express.static(path.join(__dirname, "dist")));
+              competitiveQueue = competitiveQueue.filter(p => p !== p1 && p !== p2);
 
-io.on("connection", (socket) => {
-	console.log(`Socket connected: ${socket.id}`);
+              return { roomId, p1, p2 };
+          }
+      }
 
-	const sendLobbyState = (roomId) => {
-		const room = rooms[roomId];
+      return null;
+  }
 
-		if (!room) {
-			return;
-		}
+  app.post("/join", authorize, async (req, res) => {
+      const { token } = req.cookies;
+      const username = tokenStorage[token];
 
-		const playersArray = Object.values(room.players).map((player) => {
-			return {
-				id: player.id,
-				isHost: player.isHost
-			};
-		});
+      const result = await pool.query(
+          "SELECT score FROM users WHERE username = $1",
+          [username]
+      );
 
-		io.to(roomId).emit("lobbyState", {
-			roomId: roomId,
-			settings: room.settings,
-			players: playersArray
-		});
-	}
+      if (result.rows.length === 0) {
+          return res.status(400).json({ message: "User not found" });
+      }
 
-	socket.on("joinRoom", ({ roomId, isHost }) => {
-		if (!roomId) {
-			return;
-		}
+      const score = result.rows[0].score;
 
-		const upperRoomId = roomId.toUpperCase();
+      const player = {
+          username,
+          score,
+          socketId: null,
+      };
 
-		if (isHost) {
-			if (!rooms[roomId]) {
-				rooms[upperRoomId] = {
-					settings: { ...DEFAULT_SETTINGS },
-					players: {}
-				};
-			}
-		} else {
-			if (!rooms[upperRoomId]) {
-				socket.emit("joinError", { message: "Lobby not found" });
-				return;
-			}
-		}
+      competitiveQueue.push(player);
+      console.log("Competitive queue:", competitiveQueue);
 
-		const room = rooms[upperRoomId];
-		const playerIds = Object.keys(room.players);
-		const playerCount = playerIds.length;
+      const match = tryMatchCompetitivePlayers();
 
-		if (!room.players[socket.id] && playerCount >= 2) {
-			socket.emit("joinError", { message: "Lobby is full" });
-			return;
-		}
+      if (match) {
+        const { roomId, p1, p2 } = match;
 
-		room.players[socket.id] = {
-			id: socket.id,
-			isHost: isHost === true
-		};
+        rooms[roomId] = {
+            settings: { matchDurationSec: 180, goalLimit: 5 },
+            players: {
+                [p1.socketId]: {
+                    id: p1.socketId,
+                    username: p1.username,
+                    isHost: true
+                },
+                [p2.socketId]: {
+                    id: p2.socketId,
+                    username: p2.username,
+                    isHost: false
+                }
+            },
+            game: null
+        };
 
-		socket.join(upperRoomId);
-		console.log(`Socket ${socket.id} joined room ${upperRoomId} (host: ${!!isHost})`);
+        io.to(p1.socketId).emit("competitiveMatched", { roomId });
+        io.to(p2.socketId).emit("competitiveMatched", { roomId });
 
-		sendLobbyState(upperRoomId);
-	});
+        return res.json({ matched: true, roomId });
+    }
 
-	socket.on("updateSettings", ({ roomId, settings }) => {
-		if (!roomId) {
-			return;
-		}
+      return res.json({ matched: false });
+  });
 
-		const upperRoomId = roomId.toUpperCase();
-		const room = rooms[upperRoomId];
 
-		if (!room) {
-			return;
-		}
+  app.get("/public", (req, res) => res.send("THIS IS PUBLIC\n"));
+  app.get("/private", authorize, (req, res) => res.send("THIS IS PRIVATE\n"));
+  app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-		room.settings = { ...room.settings, ...settings };
+  app.use(express.static(path.join(__dirname, "dist")));
 
-		sendLobbyState(upperRoomId);
-	});
+  io.on("connection", (socket) => {
+    console.log(`Socket connected: ${socket.id}`);
 
-	socket.on("startGame", ({ roomId, settings }) => {
-		if (!roomId) {
-			return;
-		}
+    const sendLobbyState = (roomId) => {
+      const room = rooms[roomId];
 
-		const upperRoomId = roomId.toUpperCase();
-		const room = rooms[upperRoomId];
+      if (!room) {
+        return;
+      }
 
-		if (!room) {
-			return;
-		}
+      const playersArray = Object.values(room.players).map((player) => {
+        return {
+          id: player.id,
+          username: player.username || "Guest",
+          isHost: player.isHost
+        };
+      });
 
-		if (settings) {
-			room.settings = { ...room.settings, ...settings };
-		}
 
-		room.game = createInitialGameState(room);
+      io.to(roomId).emit("lobbyState", {
+        roomId: roomId,
+        settings: room.settings,
+        players: playersArray
+      });
+    }
 
-		console.log(`Game started in room ${upperRoomId}`);
+    socket.on("joinRoom", ({ roomId, isHost }) => {
+      if (!roomId) {
+        return;
+      }
 
-		io.to(upperRoomId).emit("gameStarted", {
-			roomId: upperRoomId,
-			settings: room.settings
-		});
-	});
+      const upperRoomId = roomId.toUpperCase();
 
-	socket.on("leaveRoom", ({ roomId }) => {
-		if (!roomId) {
-			return;
-		}
+      if (isHost) {
+        if (!rooms[roomId]) {
+          rooms[upperRoomId] = {
+            settings: { ...DEFAULT_SETTINGS },
+            players: {}
+          };
+        }
+      } else {
+        if (!rooms[upperRoomId]) {
+          socket.emit("joinError", { message: "Lobby not found" });
+          return;
+        }
+      }
 
-		const upperRoomId = roomId.toUpperCase();
-		const room = rooms[upperRoomId];
+      const room = rooms[upperRoomId];
+      const playerIds = Object.keys(room.players);
+      const playerCount = playerIds.length;
 
-		if (!room) {
-			return;
-		}
+      if (!room.players[socket.id] && playerCount >= 2) {
+        socket.emit("joinError", { message: "Lobby is full" });
+        return;
+      }
 
-		if (room.players[socket.id]) {
-			delete room.players[socket.id];
-			socket.leave(upperRoomId);
-			console.log(`Socket ${socket.id} left room ${upperRoomId}`);
+      room.players[socket.id] = {
+        id: socket.id,
+        isHost: isHost === true
+      };
 
-			const remainingPlayerIds = Object.keys(room.players);
+      socket.join(upperRoomId);
+      console.log(`Socket ${socket.id} joined room ${upperRoomId} (host: ${!!isHost})`);
 
-			if (remainingPlayerIds.length === 0) {
-				delete rooms[upperRoomId];
-				console.log(`Room ${upperRoomId} deleted (empty)`);
-			} else {
-				sendLobbyState(upperRoomId);
-			}
-		}
-	});
+      sendLobbyState(upperRoomId);
+    });
 
-	socket.on("playerMove", ({ roomId, move }) => {
-		if (!roomId) {
-			return;
-		}
+    socket.on("updateSettings", ({ roomId, settings }) => {
+      if (!roomId) {
+        return;
+      }
 
-		const upperRoomId = roomId.toUpperCase();
-		const room = rooms[upperRoomId];
+      const upperRoomId = roomId.toUpperCase();
+      const room = rooms[upperRoomId];
 
-		if (room && room.game && move && typeof move.x === "number" && typeof move.y === "number") {
-			updatePlayerPosition(room.game, socket.id, move.x, move.y);
-		}
+      if (!room) {
+        return;
+      }
 
-		socket.to(upperRoomId).emit("opponentMove", move);
-	});
+      room.settings = { ...room.settings, ...settings };
 
-	socket.on("kickBall", ({ roomId }) => {
-		if (!roomId) {
-			return;
-		}
+      sendLobbyState(upperRoomId);
+    });
 
-		const upperRoomId = roomId.toUpperCase();
-		const room = rooms[upperRoomId];
+    socket.on("startGame", ({ roomId, settings }) => {
+      if (!roomId) {
+        return;
+      }
 
-		if (!room || !room.game) {
-			return;
-		}
+      const upperRoomId = roomId.toUpperCase();
+      const room = rooms[upperRoomId];
 
-		applyKick(room.game, socket.id);
-	});
+      if (!room) {
+        return;
+      }
 
-	socket.on("disconnect", () => {
-		console.log(`Socket disconnected: ${socket.id}`);
+      if (settings) {
+        room.settings = { ...room.settings, ...settings };
+      }
 
-		for (const roomId in rooms) {
-			const room = rooms[roomId];
+      room.game = createInitialGameState(room);
 
-			if (!room) {
-				continue;
-			}
+      console.log(`Game started in room ${upperRoomId}`);
 
-			if (!room.players[socket.id]) {
-				continue;
-			}
+      io.to(upperRoomId).emit("gameStarted", {
+        roomId: upperRoomId,
+        settings: room.settings
+      });
+    });
 
-			delete room.players[socket.id];
-			socket.leave(roomId);
+    socket.on("leaveRoom", ({ roomId }) => {
+      if (!roomId) {
+        return;
+      }
 
-			const remainingPlayerIds = Object.keys(room.players);
+      const upperRoomId = roomId.toUpperCase();
+      const room = rooms[upperRoomId];
 
-			if (remainingPlayerIds.length === 0) {
-				delete rooms[roomId];
-				console.log(`Room ${roomId} deleted (empty after disconnect)`);
-			} else {
-				sendLobbyState(roomId);
-			}
-		}
-	});
-});
+      if (!room) {
+        return;
+      }
 
-let lastPhysicsTime = Date.now();
+      if (room.players[socket.id]) {
+        delete room.players[socket.id];
+        socket.leave(upperRoomId);
+        console.log(`Socket ${socket.id} left room ${upperRoomId}`);
 
-setInterval(() => {
-	const now = Date.now();
-	const deltaTime = (now - lastPhysicsTime) / 1000;
-	lastPhysicsTime = now;
+        const remainingPlayerIds = Object.keys(room.players);
 
-	for (const [roomId, room] of Object.entries(rooms)) {
-		if (!room.game || !room.game.isPlaying) {
-			continue;
-		}
+        if (remainingPlayerIds.length === 0) {
+          delete rooms[upperRoomId];
+          console.log(`Room ${upperRoomId} deleted (empty)`);
+        } else {
+          sendLobbyState(upperRoomId);
+        }
+      }
+    });
 
-		const { roundReset, matchEnded } = stepGame(
-			room.game,
-			deltaTime,
-			room.settings,
-			now
-		);
+    socket.on("playerMove", ({ roomId, move }) => {
+      if (!roomId) {
+        return;
+      }
 
-		io.to(roomId).emit("gameState", {
-			ball: room.game.ball,
-			score: room.game.score,
-			round: room.game.round
-		});
+      const upperRoomId = roomId.toUpperCase();
+      const room = rooms[upperRoomId];
 
-		if (roundReset) {
-			io.to(roomId).emit("roundReset", roundReset);
-		}
+      if (room && room.game && move && typeof move.x === "number" && typeof move.y === "number") {
+        updatePlayerPosition(room.game, socket.id, move.x, move.y);
+      }
 
-		if (matchEnded) {
-			io.to(roomId).emit("matchEnded", matchEnded);
-		}
-	}
-}, PHYSICS_TICK_MS);
+      socket.to(upperRoomId).emit("opponentMove", move);
+    });
 
-server.listen(PORT, host, () => {
-	console.log(`LISTENING https://${host}:${PORT}`);
-});
+    socket.on("kickBall", ({ roomId }) => {
+      if (!roomId) {
+        return;
+      }
+
+      const upperRoomId = roomId.toUpperCase();
+      const room = rooms[upperRoomId];
+
+      if (!room || !room.game) {
+        return;
+      }
+
+      applyKick(room.game, socket.id);
+    });
+
+    socket.on("disconnect", () => {
+      console.log(`Socket disconnected: ${socket.id}`);
+
+      for (const roomId in rooms) {
+        const room = rooms[roomId];
+
+        if (!room) {
+          continue;
+        }
+
+        if (!room.players[socket.id]) {
+          continue;
+        }
+
+        delete room.players[socket.id];
+        socket.leave(roomId);
+
+        const remainingPlayerIds = Object.keys(room.players);
+
+        if (remainingPlayerIds.length === 0) {
+          delete rooms[roomId];
+          console.log(`Room ${roomId} deleted (empty after disconnect)`);
+        } else {
+          sendLobbyState(roomId);
+        }
+      }
+    });
+
+    socket.on("competitiveAttach", ({ username }) => {
+      for (const player of competitiveQueue) {
+        if (player.username === username) {
+          player.socketId = socket.id;
+        }
+      }
+    });
+
+  });
+
+  let lastPhysicsTime = Date.now();
+
+  setInterval(() => {
+    const now = Date.now();
+    const deltaTime = (now - lastPhysicsTime) / 1000;
+    lastPhysicsTime = now;
+
+    for (const [roomId, room] of Object.entries(rooms)) {
+      if (!room.game || !room.game.isPlaying) {
+        continue;
+      }
+
+      const { roundReset, matchEnded } = stepGame(
+        room.game,
+        deltaTime,
+        room.settings,
+        now
+      );
+
+      io.to(roomId).emit("gameState", {
+        ball: room.game.ball,
+        score: room.game.score,
+        round: room.game.round
+      });
+
+      if (roundReset) {
+        io.to(roomId).emit("roundReset", roundReset);
+      }
+
+      if (matchEnded) {
+        io.to(roomId).emit("matchEnded", matchEnded);
+      }
+    }
+  }, PHYSICS_TICK_MS);
+
+  app.get(/.*/, (req, res) => {
+    res.sendFile(path.join(__dirname, "dist", "index.html"));
+  });
+
+  server.listen(PORT, host, () => {
+    console.log(`LISTENING https://${host}:${PORT}`);
+  });

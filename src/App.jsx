@@ -6,32 +6,20 @@ import Game from "./Pages/game";
 import Leaderboard from "./Pages/leaderboard";
 import Profile from "./Pages/profile";
 import Login from "./Pages/login";
-import Register from "./Pages/register.jsx";
-
-function Layout({ children }) {
-	const location = useLocation();
-	const hideDashboard = location.pathname === "/register";
-
-	return (
-		<>
-			{!hideDashboard && <Dashboard />}
-			{children}
-		</>
-	);
-}
+import Register from "./Pages/register";
 
 function App() {
 	return (
 		<Router>
-			<Layout>
-				<Routes>
-					<Route path="/" element={<Home />} />
-					<Route path="/register" element={<Register />} />
-					<Route path="/game" element={<Game />} />
-					<Route path="/leaderboard" element={<Leaderboard />} />
-					<Route path="/profile" element={<Profile />} />
-				</Routes>
-			</Layout>
+			<Dashboard />
+			<Routes>
+				<Route path="/" element={<Home />} />
+				<Route path="/game" element={<Game />} />
+				<Route path="/leaderboard" element={<Leaderboard />} />
+				<Route path="/profile" element={<Profile />} />
+				<Route path="/login" element={<Login />} />
+				<Route path="/register" element={<Register />} />
+			</Routes>
 		</Router>
 	);
 }

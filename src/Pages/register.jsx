@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Input from "../components/input";
+import { Eye, EyeOff, User, Lock, UserPlus } from "lucide-react";
 
 export default function Register() {
-	const [username, setusername] = useState("");
+	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
+	const [showPassword, setShowPassword] = useState(false);
+	const [isLoading, setIsLoading] = useState(false);
+
 	const navigate = useNavigate();
 
 	const handleRegister = async (e) => {
@@ -19,10 +22,11 @@ export default function Register() {
 		if (password.length < 12) {
 			alert("Password must be at least 12 characters long.");
 			return;
-		} else if ((!/[A-Z]/.test(password)) && (!/[a-z]/.test(password)) && (!/[0-9]/.test(password)) && (!/[!@#$%^&*]/.test(password))) {
-			alert("Password must contain at least one uppercase, lowercase letter, number and special symbol.");
+		} else if (!/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[!@#$%^&*]/.test(password)) {
+			alert("Password must contain at least one uppercase, lowercase letter, number, and special symbol.");
 			return;
 		}
+
 
 
 		console.log("THIS IS THE BODY: ", JSON.stringify({ username, password }));
@@ -50,27 +54,75 @@ export default function Register() {
 	};
 
 	return (
-		<div className="w-full max-w-sm bg-white p-8 rounded-2xl shadow-lg">
-			<h2 className="text-2xl font-semibold text-center mb-6">Create Account</h2>
-			<form onSubmit={handleRegister}>
-				<Input label="username" type="username" value={username} onChange={(e) => setusername(e.target.value)} />
-				<Input label="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-				<Input label="Confirm Password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+		<div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+			<div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-10 border border-gray-200">
 
-				<button
-					type="submit"
-					className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition"
-				>
-					Register
-				</button>
-			</form>
+				<h1 className="text-3xl font-bold text-gray-900 text-center mb-8">
+					Create an Account
+				</h1>
 
-			<p className="text-sm text-center text-gray-600 mt-4">
-				Already have an account?{" "}
-				<Link to="/" className="text-green-600 hover:underline">
-					Login
-				</Link>
-			</p>
+				<form onSubmit={handleRegister} className="space-y-6">
+
+					<div className="relative">
+						<User className="absolute left-3 top-3 text-gray-400" size={20} />
+						<input
+							type="text"
+							placeholder="Username"
+							value={username}
+							onChange={(e) => setUsername(e.target.value)}
+							className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+							required
+						/>
+					</div>
+
+					<div className="relative">
+						<Lock className="absolute left-3 top-3 text-gray-400" size={20} />
+						<input
+							type={showPassword ? "text" : "password"}
+							placeholder="Password"
+							value={password}
+							onChange={(e) => setPassword(e.target.value)}
+							className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+							required
+						/>
+					</div>
+
+					<div className="relative">
+						<Lock className="absolute left-3 top-3 text-gray-400" size={20} />
+						<input
+							type={showPassword ? "text" : "password"}
+							placeholder="Confirm Password"
+							value={confirmPassword}
+							onChange={(e) => setConfirmPassword(e.target.value)}
+							className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+							required
+						/>
+						<button
+							type="button"
+							className="absolute right-3 top-3 text-gray-500"
+							onClick={() => setShowPassword(!showPassword)}
+						>
+							{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+						</button>
+					</div>
+
+					<button
+						type="submit"
+						disabled={isLoading}
+						className="w-full flex items-center justify-center gap-2 bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition"
+					>
+						<UserPlus size={20} />
+						{isLoading ? "Creating Account..." : "Register"}
+					</button>
+				</form>
+
+				<p className="text-center text-gray-600 text-sm mt-8">
+					Already have an account?{" "}
+					<Link to="/" className="text-blue-600 font-medium hover:underline">
+						Login here
+					</Link>
+				</p>
+			</div>
 		</div>
 	);
 }
