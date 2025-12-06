@@ -1,6 +1,13 @@
-# React + Vite
+## Setup and Running
 
-Joseph Seagal
+- Duplicate the `.env.example` and `env.json.example` files
+- Remove the `.example` from the file names
+- Update the content with your password
+
+- Run server with `npm run start`
+- Run application with `npm run dev`
+
+## React + Vite
 
 Currently, two official plugins are available:
 
