@@ -43,7 +43,7 @@ export default function Register() {
 
 			if (response.ok) {
 				alert("Registration successful! You can now log in.");
-				navigate("/");
+				navigate("/login");
 			} else {
 				alert(data.message || "Registration failed.");
 			}
