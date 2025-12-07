@@ -5,6 +5,8 @@ import GameSettings from "../components/game_settings.jsx";
 import GamePlay from "../components/game_play.jsx";
 import Lobby from "../components/lobby.jsx";
 
+import "../Pages-style/global.css"
+
 const SOCKET_URL =
 	import.meta.env.DEV
 		? "http://localhost:8080"
