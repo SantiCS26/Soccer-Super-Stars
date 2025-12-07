@@ -347,6 +347,13 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 			}
 		}
 
+		function handleOpponentLeft() {
+			console.log("Opponent disconnected during match");
+			if (onExit) {
+				onExit();
+			}
+		}
+
 		socket.on("gameState", handleGameState);
 		socket.on("roundReset", handleRoundReset);
 		socket.on("matchEnded", handleMatchEnded);
