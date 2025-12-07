@@ -28,8 +28,9 @@
   let databaseConfig;
   let rooms = {};
   let tokenStorage = {};
-  let competitiveQueue = []; 
-
+  let competitiveQueue = [];
+  let casualQueue = [];
+  let usernameToSocketId = {};
 
   const DEFAULT_SETTINGS = {
     matchDurationSec: 180,
@@ -301,86 +302,178 @@
 });
 
   function tryMatchCompetitivePlayers() {
-      if (competitiveQueue.length < 2) return null;
+    if (competitiveQueue.length < 2) return null;
 
-      competitiveQueue.sort((a, b) => a.score - b.score);
+    const p1 = competitiveQueue.shift();
+    const p2 = competitiveQueue.shift();
+    const roomId = generateRoomCode();
 
-      for (let i = 0; i < competitiveQueue.length - 1; i++) {
-          const p1 = competitiveQueue[i];
-          const p2 = competitiveQueue[i + 1];
+    rooms[roomId] = {
+      settings: { matchDurationSec: 180, goalLimit: 5 },
+      players: {},
+      game: null
+    };
 
-          const difference = Math.abs(p1.score - p2.score);
-
-          if (difference <= 150) {
-              const roomId = generateRoomCode();
-              rooms[roomId] = {
-                  settings: { matchDurationSec: 180, goalLimit: 5 },
-                  players: {},
-                  game: null
-              };
-
-              competitiveQueue = competitiveQueue.filter(p => p !== p1 && p !== p2);
-
-              return { roomId, p1, p2 };
-          }
-      }
-
-      return null;
+    return { roomId, p1, p2 };
   }
 
-  app.post("/join", authorize, async (req, res) => {
-      const { token } = req.cookies;
-      const username = tokenStorage[token];
+  function tryMatchCasualPlayers() {
+    if (casualQueue.length < 2) return null;
 
-      const result = await pool.query(
-          "SELECT score FROM users WHERE username = $1",
-          [username]
-      );
+    const p1 = casualQueue.shift();
+    const p2 = casualQueue.shift();
 
-      if (result.rows.length === 0) {
-          return res.status(400).json({ message: "User not found" });
-      }
+    const roomId = generateRoomCode();
 
-      const score = result.rows[0].score;
+    rooms[roomId] = {
+      settings: { matchDurationSec: 180, goalLimit: 5 },
+      players: {},
+      game: null,
+    };
 
-      const player = {
-          username,
-          score,
-          socketId: null,
-      };
+    return { roomId, p1, p2 };
+  }
 
-      competitiveQueue.push(player);
-      console.log("Competitive queue:", competitiveQueue);
+  app.post("/join-casual", authorize, async (req, res) => {
+    const { token } = req.cookies;
+    const username = tokenStorage[token];
 
-      const match = tryMatchCompetitivePlayers();
-
-      if (match) {
-        const { roomId, p1, p2 } = match;
-
-        rooms[roomId] = {
-            settings: { matchDurationSec: 180, goalLimit: 5 },
-            players: {
-                [p1.socketId]: {
-                    id: p1.socketId,
-                    username: p1.username,
-                    isHost: true
-                },
-                [p2.socketId]: {
-                    id: p2.socketId,
-                    username: p2.username,
-                    isHost: false
-                }
-            },
-            game: null
-        };
-
-        io.to(p1.socketId).emit("competitiveMatched", { roomId });
-        io.to(p2.socketId).emit("competitiveMatched", { roomId });
-
-        return res.json({ matched: true, roomId });
+    if (!username) {
+      return res.status(401).json({ message: "Not logged in" });
     }
 
+    if (casualQueue.find(p => p.username === username)) {
       return res.json({ matched: false });
+    }
+
+    casualQueue.push({ username });
+    console.log("Casual queue:", casualQueue);
+
+    const match = tryMatchCasualPlayers();
+
+    if (match) {
+      const { roomId, p1, p2 } = match;
+      const p1SocketId = usernameToSocketId[p1.username];
+      const p2SocketId = usernameToSocketId[p2.username];
+
+      if (!p1SocketId || !p2SocketId) {
+        console.warn("Sockets not ready yet");
+        casualQueue.push(p1, p2);
+        return res.json({ matched: false });
+      }
+
+      const p1Socket = io.sockets.sockets.get(p1SocketId);
+      const p2Socket = io.sockets.sockets.get(p2SocketId);
+      
+      if (p1Socket) p1Socket.join(roomId);
+      if (p2Socket) p2Socket.join(roomId);
+
+      rooms[roomId].players = {
+        [p1SocketId]: { id: p1SocketId, username: p1.username, isHost: true },
+        [p2SocketId]: { id: p2SocketId, username: p2.username, isHost: false }
+      };
+
+      rooms[roomId].game = createInitialGameState(rooms[roomId]);
+
+      io.to(p1SocketId).emit("casualMatched", {
+        roomId,
+        you: p1.username,
+        opponent: p2.username,
+        isHost: true
+      });
+      io.to(p2SocketId).emit("casualMatched", {
+        roomId,
+        you: p2.username,
+        opponent: p1.username,
+        isHost: false
+      });
+
+      setTimeout(() => {
+        io.to(p1SocketId).emit("gameStarted", {
+          roomId: roomId,
+          settings: rooms[roomId].settings
+        });
+        io.to(p2SocketId).emit("gameStarted", {
+          roomId: roomId,
+          settings: rooms[roomId].settings
+        });
+      }, 3000);
+
+      return res.json({ matched: true, roomId });
+    }
+
+    return res.json({ matched: false });
+  });
+
+  app.post("/join-competitive", authorize, async (req, res) => {
+    const { token } = req.cookies;
+    const username = tokenStorage[token];
+
+    if (!username) {
+      return res.status(401).json({ message: "Not logged in" });
+    }
+
+    if (competitiveQueue.find(p => p.username === username)) {
+      return res.json({ matched: false });
+    }
+
+    competitiveQueue.push({ username });
+    console.log("Competitive queue:", competitiveQueue);
+
+    const match = tryMatchCompetitivePlayers();
+
+    if (match) {
+      const { roomId, p1, p2 } = match;
+      const p1SocketId = usernameToSocketId[p1.username];
+      const p2SocketId = usernameToSocketId[p2.username];
+
+      if (!p1SocketId || !p2SocketId) {
+        console.warn("Sockets not ready yet");
+        competitiveQueue.push(p1, p2);
+        return res.json({ matched: false });
+      }
+
+      const p1Socket = io.sockets.sockets.get(p1SocketId);
+      const p2Socket = io.sockets.sockets.get(p2SocketId);
+      
+      if (p1Socket) p1Socket.join(roomId);
+      if (p2Socket) p2Socket.join(roomId);
+
+      rooms[roomId].players = {
+        [p1SocketId]: { id: p1SocketId, username: p1.username, isHost: true },
+        [p2SocketId]: { id: p2SocketId, username: p2.username, isHost: false }
+      };
+
+      rooms[roomId].game = createInitialGameState(rooms[roomId]);
+
+      io.to(p1SocketId).emit("competitiveMatched", {
+        roomId,
+        you: p1.username,
+        opponent: p2.username,
+        isHost: true
+      });
+      io.to(p2SocketId).emit("competitiveMatched", {
+        roomId,
+        you: p2.username,
+        opponent: p1.username,
+        isHost: false
+      });
+
+      setTimeout(() => {
+        io.to(p1SocketId).emit("gameStarted", {
+          roomId: roomId,
+          settings: rooms[roomId].settings
+        });
+        io.to(p2SocketId).emit("gameStarted", {
+          roomId: roomId,
+          settings: rooms[roomId].settings
+        });
+      }, 3000);
+
+      return res.json({ matched: true, roomId });
+    }
+
+    return res.json({ matched: false });
   });
 
 
@@ -561,6 +654,23 @@
     socket.on("disconnect", () => {
       console.log(`Socket disconnected: ${socket.id}`);
 
+      for (const [name, id] of Object.entries(usernameToSocketId)) {
+        if (id === socket.id) {
+          delete usernameToSocketId[name];
+
+          for (const [name, id] of Object.entries(usernameToSocketId)) {
+            if (id === socket.id) {
+              competitiveQueue = competitiveQueue.filter(p => p.username !== name);
+              casualQueue = casualQueue.filter(p => p.username !== name);
+              delete usernameToSocketId[name];
+              break;
+            }
+          }
+
+          break;
+        }
+      }
+
       for (const roomId in rooms) {
         const room = rooms[roomId];
 
@@ -570,6 +680,10 @@
 
         if (!room.players[socket.id]) {
           continue;
+        }
+
+        if (room.game && room.game.isPlaying) {
+          socket.to(roomId).emit("opponentLeft");
         }
 
         delete room.players[socket.id];
@@ -587,7 +701,14 @@
     });
 
     socket.on("competitiveAttach", ({ username }) => {
-      for (const player of competitiveQueue) {
+      if (!username) return;
+
+      usernameToSocketId[username] = socket.id;
+      console.log("Attached username to socket", username, socket.id);
+    });
+
+    socket.on("casualAttach", ({ username }) => {
+      for (const player of casualQueue) {
         if (player.username === username) {
           player.socketId = socket.id;
         }

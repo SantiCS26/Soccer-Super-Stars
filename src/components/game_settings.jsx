@@ -1,7 +1,12 @@
 import { useState } from "react";
 import "../Pages-style/game_settings.css"
 
-export default function GameSettings({ onHost, onJoin }) {
+export default function GameSettings({
+	onHost,
+	onJoin,
+	onCompetitive,
+	onCasualSearch
+}) {
 	const [roomCode, setRoomCode] = useState("");
 
 	const handleHostClick = async () => {
@@ -11,7 +16,7 @@ export default function GameSettings({ onHost, onJoin }) {
 			});
 			const data = await res.json();
 			if (!data.roomId) {
-                console.error("No roomId returned from /create");
+				console.error("No roomId returned from /create");
 				return;
 			}
 			onHost(data.roomId.toUpperCase());
@@ -30,25 +35,17 @@ export default function GameSettings({ onHost, onJoin }) {
 		onJoin(trimmed);
 	};
 
-	async function onJoinCompetitive() {
-		const res = await fetch("https://soccer-super-stars.fly.dev/join", {
-			method: "POST",
-			credentials: "include"
-		});
-
-		const data = await res.json();
-
-		if (data.matched) {
-			onJoin(data.roomId);
-		} else {
-			alert("Waiting for another player with similar skill…");
+	const handleCompetitiveRandomClick = () => {
+		if (onCompetitive) {
+			onCompetitive();
 		}
-	}
-
-	const onJoinCasual = () => {
-		onJoin("RANDOM_CASUAL");
 	};
 
+	const handleCasualRandomClick = () => {
+		if (onCasualSearch) {
+			onCasualSearch();
+		}
+	};
 
 	return (
 		<div className="settingsBox">
@@ -86,14 +83,14 @@ export default function GameSettings({ onHost, onJoin }) {
 
 				<button
 					className="settingsButton randomCompetitive"
-					onClick={onJoinCompetitive}
+					onClick={handleCompetitiveRandomClick}
 				>
 					Competitive Match
 				</button>
 
 				<button
 					className="settingsButton randomCasual"
-					onClick={onJoinCasual}
+					onClick={handleCasualRandomClick}
 				>
 					Casual Match
 				</button>
