@@ -4,7 +4,6 @@ import { io } from "socket.io-client";
 import GameSettings from "../components/game_settings.jsx";
 import GamePlay from "../components/game_play.jsx";
 import Lobby from "../components/lobby.jsx";
-import CompetitiveLobby from "../components/competitiveLobby.jsx";
 
 import "../Pages-style/global.css"
 
@@ -25,16 +24,55 @@ export default function GamePage() {
 		goalLimit: 5
 	});
 
+	const [searchStartTime, setSearchStartTime] = useState(null);
+	const [searchElapsed, setSearchElapsed] = useState(0);
+	const [matchFoundInfo, setMatchFoundInfo] = useState(null);
+
+	const [username, setUsername] = useState(null);
+
+	useEffect(() => {
+		async function fetchUser() {
+			try {
+				const res = await fetch(`${SOCKET_URL}/api/validate-token`, {
+					credentials: "include",
+				});
+				const data = await res.json();
+				if (data.valid) {
+					setUsername(data.username);
+				} else {
+					setUsername(null);
+				}
+			} catch (err) {
+				console.error("Failed to validate token", err);
+				setUsername(null);
+			}
+		}
+
+		fetchUser();
+	}, []);
+
+	useEffect(() => {
+		if (socketConnection && username) {
+			socketConnection.emit("competitiveAttach", { username });
+			console.log("Sent competitiveAttach for", username);
+		}
+	}, [socketConnection, username]);
+
 	useEffect(() => {
 		const newSocket = io(SOCKET_URL, {
 			path: "/socket.io/",
-			transports: ["websocket"]
+			transports: ["websocket"],
 		});
 
 		setSocketConnection(newSocket);
 
 		newSocket.on("connect", () => {
 			console.log("Socket connected (client):", newSocket.id);
+
+			if (username) {
+				newSocket.emit("competitiveAttach", { username });
+				newSocket.emit("casualAttach", { username });
+			}
 		});
 
 		newSocket.on("lobbyState", (state) => {
@@ -44,7 +82,7 @@ export default function GamePage() {
 				setSettings((previousSettings) => {
 					return {
 						...previousSettings,
-						...state.settings
+						...state.settings,
 					};
 				});
 			}
@@ -54,10 +92,36 @@ export default function GamePage() {
 			}
 		});
 
-		newSocket.on("competitiveMatched", ({ roomId }) => {
-			console.log("Matched competitive game:", roomId);
+		newSocket.on("competitiveMatched", ({ roomId, you, opponent, isHost }) => {
+			console.log("Matched competitive game:", roomId, "isHost:", isHost);
 			setMode("competitive");
-			handleJoin(roomId);
+			setRoomId(roomId);
+			setIsHost(isHost || false);
+			setMatchFoundInfo({
+				roomId,
+				mode: "competitive",
+				you,
+				opponent,
+			});
+			setPhase("matchFound");
+			setSearchStartTime(null);
+			setSearchElapsed(0);
+		});
+
+		newSocket.on("casualMatched", ({ roomId, you, opponent, isHost }) => {
+			console.log("Matched casual game:", roomId, "isHost:", isHost);
+			setMode("casual");
+			setRoomId(roomId);
+			setIsHost(isHost || false);
+			setMatchFoundInfo({
+				roomId,
+				mode: "casual",
+				you,
+				opponent,
+			});
+			setPhase("matchFound");
+			setSearchStartTime(null);
+			setSearchElapsed(0);
 		});
 
 		newSocket.on("gameStarted", ({ settings: serverSettings }) => {
@@ -67,7 +131,7 @@ export default function GamePage() {
 				setSettings((previousSettings) => {
 					return {
 						...previousSettings,
-						...serverSettings
+						...serverSettings,
 					};
 				});
 			}
@@ -75,27 +139,28 @@ export default function GamePage() {
 			setPhase("playing");
 		});
 
-		newSocket.on("joinError", (error) => {
-			console.warn("joinError:", error);
-
-			let message = "Could not join that lobby.";
-
-			if (error && error.message) {
-				message = error.message;
-			}
-
-			alert(message);
-
-			setPhase("menu");
-			setRoomId(null);
-			setIsHost(false);
-			setPlayers([]);
+		newSocket.on("opponentLeft", () => {
+			console.log("Opponent left the match");
+			resetToMenu();
 		});
 
 		return () => {
 			newSocket.disconnect();
 		};
-	}, []);
+	}, [username]);
+
+	useEffect(() => {
+		if (phase !== "searching" || !searchStartTime) {
+			setSearchElapsed(0);
+			return;
+		}
+
+		const intervalId = setInterval(() => {
+			setSearchElapsed(Math.floor((Date.now() - searchStartTime) / 1000));
+		}, 1000);
+
+		return () => clearInterval(intervalId);
+	}, [phase, searchStartTime]);
 
 	function handleHostCasual(hostRoomId) {
 		const upperRoomId = hostRoomId.toUpperCase();
@@ -130,35 +195,81 @@ export default function GamePage() {
 	}
 
 	async function handleSearchCompetitive() {
+		if (!socketConnection) {
+			console.warn("No socket connection yet");
+			return;
+		}
+
 		setMode("competitive");
 		setPhase("searching");
+		setSearchStartTime(Date.now());
 
 		const res = await fetch(
-			"https://soccer-super-stars.fly.dev/join",
+			`${SOCKET_URL}/join-competitive`,
 			{
 				method: "POST",
-				credentials: "include"
+				credentials: "include",
 			}
 		);
+
+		if (!res.ok) {
+			setPhase("menu");
+			setSearchStartTime(null);
+
+			if (res.status === 401) {
+				alert("Please log in before searching for a competitive match.");
+			} else {
+				alert("Unable to join competitive queue. Please try again.");
+			}
+			return;
+		}
 
 		const data = await res.json();
 
 		if (data.matched) {
-			handleJoin(data.roomId);
+			console.log("Server says matched; waiting for VS screen event…");
 		} else {
-			console.log("Searching for match...");
+			console.log("Searching for competitive match...");
 		}
 	}
 
-	function handleJoin(roomCode) {
-		setRoomId(roomCode.toUpperCase());
-		setIsHost(false);
-		setPhase("lobby");
+	async function handleSearchCasual() {
+		if (!socketConnection) {
+			console.warn("No socket connection yet");
+			return;
+		}
 
-		socketConnection.emit("joinRoom", {
-			roomId: roomCode.toUpperCase(),
-			isHost: false
-		});
+		setMode("casual");
+		setPhase("searching");
+		setSearchStartTime(Date.now());
+
+		const res = await fetch(
+			`${SOCKET_URL}/join-casual`,
+			{
+				method: "POST",
+				credentials: "include",
+			}
+		);
+
+		if (!res.ok) {
+			setPhase("menu");
+			setSearchStartTime(null);
+
+			if (res.status === 401) {
+				alert("Please log in before searching for a casual match.");
+			} else {
+				alert("Unable to join casual queue. Please try again.");
+			}
+			return;
+		}
+
+		const data = await res.json();
+
+		if (data.matched) {
+			console.log("Server says matched; waiting for VS screen event…");
+		} else {
+			console.log("Searching for casual match...");
+		}
 	}
 
 	function handleChangeSettings(nextSettingsOrUpdater) {
@@ -229,38 +340,40 @@ export default function GamePage() {
 				onHost={handleHostCasual}
 				onJoin={handleJoinCasual}
 				onCompetitive={handleSearchCompetitive}
+				onCasualSearch={handleSearchCasual}
 			/>
 		);
 	} else if (phase === "searching") {
+		const label = mode === "competitive" ? "competitive" : "casual";
+
 		content = (
 			<div className="searchingBox">
-				<h2>Searching for opponent…</h2>
-				<p>We’re matching you with a player of similar skill.</p>
+				<h2>Searching for a {label} match…</h2>
+				<p>Time in queue: {searchElapsed}s</p>
+			</div>
+		);
+	} else if (phase === "matchFound" && matchFoundInfo) {
+		content = (
+			<div className="matchFoundBox">
+				<h2>Match found!</h2>
+				<p>
+					{matchFoundInfo.you} vs {matchFoundInfo.opponent}
+				</p>
+				<p>Starting in a moment…</p>
 			</div>
 		);
 	} else if (phase === "lobby") {
-		if (mode === "competitive") {
-			content = (
-				<CompetitiveLobby
-					roomId={roomId}
-					players={players}
-					onStart={handleStartGame}
-					onBack={handleBackToMenu}
-				/>
-			);
-		} else {
-			content = (
-				<Lobby
-					roomId={roomId}
-					isHost={isHost}
-					settings={settings}
-					players={players}
-					onChangeSettings={handleChangeSettings}
-					onBack={handleBackToMenu}
-					onStart={handleStartGame}
-				/>
-			);
-		}
+		content = (
+			<Lobby
+				roomId={roomId}
+				isHost={isHost}
+				settings={settings}
+				players={players}
+				onChangeSettings={handleChangeSettings}
+				onBack={handleBackToMenu}
+				onStart={handleStartGame}
+			/>
+		);
 	} else if (phase === "playing") {
 		content = (
 			<GamePlay
