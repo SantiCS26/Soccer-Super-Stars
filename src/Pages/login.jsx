@@ -40,30 +40,26 @@ export default function Login() {
 
 
 	return (
-		<div className="login-page-container">
+		<div className="login-page-container dark-mode">
 
-			<div className="floating-shape blur-blue"></div>
-			<div className="floating-shape blur-purple"></div>
+			<div className="floating-shape neon-blue"></div>
+			<div className="floating-shape neon-purple"></div>
+			<div className="floating-shape neon-pink"></div>
 
-			<div className="login-wrapper">
-				
+			<div className="login-wrapper dark-card">
+
 				<div className="login-hero hidden md:flex">
 					<h1 className="hero-title">Welcome Back</h1>
 					<p className="hero-subtitle">
-						Access your account and continue where you left off.
+						Continue your journey with us.
 					</p>
-					<img
-						src="https://cdni.iconscout.com/illustration/premium/thumb/authentication-security-illustration-download-in-svg-png-gif-file-formats--internet-data-online-pack-design-development-illustrations-4847089.png"
-						className="hero-image"
-						alt="Login Illustration"
-					/>
 				</div>
 
 				<div className="login-card">
 					<div className="accent-bar"></div>
 
 					<h2 className="card-title">Sign In</h2>
-					<p className="card-subtitle">Enter your credentials</p>
+					<p className="card-subtitle">Enter your credentials below</p>
 
 					<form onSubmit={handleLogin} className="space-y-6">
 
@@ -74,7 +70,7 @@ export default function Login() {
 								placeholder="Username"
 								value={username}
 								onChange={(e) => setUsername(e.target.value)}
-								className="modern-input"
+								className="modern-input dark-input"
 								required
 							/>
 						</div>
@@ -86,9 +82,10 @@ export default function Login() {
 								placeholder="Password"
 								value={password}
 								onChange={(e) => setPassword(e.target.value)}
-								className="modern-input"
+								className="modern-input dark-input"
 								required
 							/>
+
 							<button
 								type="button"
 								onClick={() => setShowPassword(!showPassword)}
@@ -101,7 +98,7 @@ export default function Login() {
 						<button
 							type="submit"
 							disabled={isLoading}
-							className="modern-btn"
+							className="modern-btn neon-btn"
 						>
 							<LogIn size={18} />
 							{isLoading ? "Logging in..." : "Login"}
@@ -110,7 +107,7 @@ export default function Login() {
 
 					<p className="register-text">
 						Don't have an account?{" "}
-						<Link to="/register" className="text-blue-600 font-medium hover:underline">
+						<Link to="/register" className="text-blue-400 font-medium hover:underline">
 							Register here
 						</Link>
 					</p>
