@@ -429,6 +429,7 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 
 			const won = myScore > opponentScore;
 
+			//test
 			if (isCompetitive) {
 				console.log("Reporting match result, won:", won);
 				reportMatchResult(won, isCompetitive);
