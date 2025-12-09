@@ -19,8 +19,8 @@ const PLAYER_BODY_RADIUS = PLAYER_SIZE / 2;
 const KICK_SLOW_DAMP = 0.9;
 const DRIBBLE_NUDGE_MULT = 5;
 
-const POWERUP_MIN_INTERVAL_MS = 15000;
-const POWERUP_MAX_INTERVAL_MS = 30000;
+const POWERUP_MIN_INTERVAL_MS = 5000;
+const POWERUP_MAX_INTERVAL_MS = 20000;
 const MAX_POWERUPS_ON_FIELD = 2;
 const POWERUP_RADIUS = 16;
 
@@ -35,10 +35,81 @@ const POWERUP_DEFS = [
 	},
 	{
 		id: "mega_kick",
-		label: "8x Kick Power",
+		label: "4x Kick Power",
 		durationSec: 8,
 		effects: {
-			kickPowerMultiplier: 8
+			kickPowerMultiplier: 4
+		}
+	},
+	{
+		id: "long_range",
+		label: "Long Range",
+		durationSec: 10,
+		effects: {
+			kickRadiusMultiplier: 2.0,
+			speedMultiplier: 0.85
+		}
+	},
+	{
+		id: "tank_mode",
+		label: "Tank Mode",
+		durationSec: 10,
+		effects: {
+			speedMultiplier: 0.7,
+			kickPowerMultiplier: 1.8,
+			kickRadiusMultiplier: 1.3
+		}
+	},
+	{
+		id: "slippery_boots",
+		label: "Slippery Boots",
+		durationSec: 9,
+		effects: {
+			speedMultiplier: 1.7
+		}
+	},
+	{
+		id: "hyper_dash",
+		label: "Hyper Dash",
+		durationSec: 6,
+		effects: {
+			speedMultiplier: 2.5,
+			kickPowerMultiplier: 0.8
+		}
+	},
+	{
+		id: "precision_kick",
+		label: "Precision Kick",
+		durationSec: 10,
+		effects: {
+			kickPowerMultiplier: 2,
+			kickRadiusMultiplier: 1.3
+		}
+	},
+	{
+		id: "sticky_shot",
+		label: "Sticky Shot",
+		durationSec: 10,
+		effects: {
+			kickRadiusMultiplier: 1.7,
+			speedMultiplier: 0.9
+		}
+	},
+	{
+		id: "agility_mode",
+		label: "Agility Mode",
+		durationSec: 9,
+		effects: {
+			speedMultiplier: 1.6
+		}
+	},
+	{
+		id: "heavy_weight",
+		label: "Heavy Weight",
+		durationSec: 8,
+		effects: {
+			speedMultiplier: 0.55,
+			kickPowerMultiplier: 3
 		}
 	}
 ];
@@ -244,7 +315,13 @@ export function applyKick(game, playerId) {
 	const dy = ball.y - playerCenterY;
 	const distSq = dx * dx + dy * dy;
 	const dist = Math.sqrt(distSq) || 1;
-	const maxKickDistance = PLAYER_KICK_RADIUS + ballRadius;
+	const powerState = game.playerPowerups && game.playerPowerups[playerId];
+	const effects = powerState && powerState.active && powerState.active.effects
+		? powerState.active.effects
+		: {};
+
+	const radiusMult = typeof effects.kickRadiusMultiplier === "number" ? effects.kickRadiusMultiplier : 1;
+	const maxKickDistance = PLAYER_KICK_RADIUS * radiusMult + ballRadius;
 
 	if (dist > maxKickDistance) {
 		return;
@@ -253,10 +330,7 @@ export function applyKick(game, playerId) {
 	const nx = dx / dist;
 	const ny = dy / dist;
 
-	const powerState = game.playerPowerups && game.playerPowerups[playerId];
-	const kickMult = powerState && powerState.active && powerState.active.effects && powerState.active.effects.kickPowerMultiplier
-		? powerState.active.effects.kickPowerMultiplier
-		: 1;
+	const kickMult = typeof effects.kickPowerMultiplier === "number" ? effects.kickPowerMultiplier : 1;
 	const kickAccel = KICK_ACCELERATION * kickMult;
 
 	ball.vx += nx * kickAccel;

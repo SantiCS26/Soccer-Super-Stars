@@ -123,11 +123,21 @@ export default function Home() {
 							<div className="divider"></div>
 
 							<div className="key-group">
-								<div className="space-key">SPACE</div>
-								<div className="label">Shoot / Sprint</div>
+								<div className="row">
+									<div className="space-key">SPACE</div>
+								</div>
+								<div className="row">
+									<div className="label">Shoot</div>
+								</div>
+								<div className="row">
+									<div className="key">K</div>
+									<div className="key">L</div>
+								</div>
+								<div className="row">
+									<div className="label">Use / Discard Power-Up</div>
+								</div>
 							</div>
 						</div>
-						<p className="controls-hint">💡 Hold SPACE for power shots</p>
 					</div>
 				</div>
 			</section>
