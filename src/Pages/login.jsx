@@ -11,6 +11,8 @@ export default function Login() {
 
 	const handleLogin = async (e) => {
 		e.preventDefault();
+		setIsLoading(true);
+
 		try {
 			const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -23,54 +25,58 @@ export default function Login() {
 
 			const data = await response.json();
 			if (response.ok) {
-				alert("Login successful!");
 				navigate("/");
 			} else {
 				alert(data.message);
 			}
 		} catch (error) {
-			console.log("Body being sent: ", JSON.stringify({ username, password }));
 			console.error("Error logging in:", error);
+		} finally {		
+			setIsLoading(false);
 		}
 	};
 
 
 	return (
-		<div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-			<div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-10 border border-gray-200">
+		<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 p-4">
+			<div className="w-full max-w-md bg-white/80 backdrop-blur-xl border border-gray-200 shadow-2xl rounded-2xl p-10 transition-all">
 
-				<h1 className="text-3xl font-bold text-gray-900 text-center mb-8">
+				<h1 className="text-4xl font-extrabold text-gray-900 text-center mb-2">
 					Welcome Back
 				</h1>
+				<p className="text-center text-gray-600 mb-8">
+					Sign in to continue
+				</p>
 
 				<form onSubmit={handleLogin} className="space-y-6">
 
-					<div className="relative">
-						<User className="absolute left-3 top-3 text-gray-400" size={20} />
+					<div className="relative group">
+						<User className="absolute left-3 top-3 text-gray-400 group-focus-within:text-blue-600 transition" size={20} />
 						<input
 							type="text"
 							placeholder="Username"
 							value={username}
 							onChange={(e) => setUsername(e.target.value)}
-							className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+							className="w-full pl-11 pr-3 py-3 border border-gray-300 rounded-xl bg-gray-50 focus:bg-white transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
 							required
 						/>
 					</div>
 
-					<div className="relative">
-						<Lock className="absolute left-3 top-3 text-gray-400" size={20} />
+					<div className="relative group">
+						<Lock className="absolute left-3 top-3 text-gray-400 group-focus-within:text-blue-600 transition" size={20} />
 						<input
 							type={showPassword ? "text" : "password"}
 							placeholder="Password"
 							value={password}
 							onChange={(e) => setPassword(e.target.value)}
-							className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+							className="w-full pl-11 pr-11 py-3 border border-gray-300 rounded-xl bg-gray-50 focus:bg-white transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
 							required
-                        />
+						/>
+
 						<button
 							type="button"
-							className="absolute right-3 top-3 text-gray-500"
 							onClick={() => setShowPassword(!showPassword)}
+							className="absolute right-3 top-3 text-gray-500 hover:text-gray-700 transition"
 						>
 							{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
 						</button>
@@ -79,7 +85,7 @@ export default function Login() {
 					<button
 						type="submit"
 						disabled={isLoading}
-						className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition"
+						className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-xl font-semibold shadow-md hover:bg-blue-700 disabled:opacity-60 transition-all"
 					>
 						<LogIn size={20} />
 						{isLoading ? "Logging in..." : "Login"}
