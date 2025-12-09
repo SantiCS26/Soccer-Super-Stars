@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, User, Lock, LogIn } from "lucide-react";
+import "../Pages-style/login.css";
+
 
 export default function Login() {
 	const [username, setUsername] = useState("");
@@ -11,6 +13,8 @@ export default function Login() {
 
 	const handleLogin = async (e) => {
 		e.preventDefault();
+		setIsLoading(true);
+
 		try {
 			const API_BASE_URL = import.meta.env.VITE_API_URL;
 
@@ -23,75 +27,92 @@ export default function Login() {
 
 			const data = await response.json();
 			if (response.ok) {
-				alert("Login successful!");
 				navigate("/");
 			} else {
 				alert(data.message);
 			}
 		} catch (error) {
-			console.log("Body being sent: ", JSON.stringify({ username, password }));
 			console.error("Error logging in:", error);
+		} finally {		
+			setIsLoading(false);
 		}
 	};
 
 
 	return (
-		<div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-			<div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-10 border border-gray-200">
+		<div className="login-page-container dark-mode">
 
-				<h1 className="text-3xl font-bold text-gray-900 text-center mb-8">
-					Welcome Back
-				</h1>
+			<div className="floating-shape neon-blue"></div>
+			<div className="floating-shape neon-purple"></div>
+			<div className="floating-shape neon-pink"></div>
 
-				<form onSubmit={handleLogin} className="space-y-6">
+			<div className="login-wrapper dark-card">
 
-					<div className="relative">
-						<User className="absolute left-3 top-3 text-gray-400" size={20} />
-						<input
-							type="text"
-							placeholder="Username"
-							value={username}
-							onChange={(e) => setUsername(e.target.value)}
-							className="w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-							required
-						/>
-					</div>
+				<div className="login-hero hidden md:flex">
+					<h1 className="hero-title">Welcome Back</h1>
+					<p className="hero-subtitle">
+						Continue your journey with us.
+					</p>
+				</div>
 
-					<div className="relative">
-						<Lock className="absolute left-3 top-3 text-gray-400" size={20} />
-						<input
-							type={showPassword ? "text" : "password"}
-							placeholder="Password"
-							value={password}
-							onChange={(e) => setPassword(e.target.value)}
-							className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-							required
-                        />
+				<div className="login-card">
+					<div className="accent-bar"></div>
+
+					<h2 className="card-title">Sign In</h2>
+					<p className="card-subtitle">Enter your credentials below</p>
+
+					<form onSubmit={handleLogin} className="space-y-6">
+
+						<div className="relative group">
+							<User className="input-icon" size={20} />
+							<input
+								type="text"
+								placeholder="Username"
+								value={username}
+								onChange={(e) => setUsername(e.target.value)}
+								className="modern-input dark-input"
+								required
+							/>
+						</div>
+
+						<div className="relative group">
+							<Lock className="input-icon" size={20} />
+							<input
+								type={showPassword ? "text" : "password"}
+								placeholder="Password"
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								className="modern-input dark-input"
+								required
+							/>
+
+							<button
+								type="button"
+								onClick={() => setShowPassword(!showPassword)}
+								className="password-toggle"
+							>
+								{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+							</button>
+						</div>
+
 						<button
-							type="button"
-							className="absolute right-3 top-3 text-gray-500"
-							onClick={() => setShowPassword(!showPassword)}
+							type="submit"
+							disabled={isLoading}
+							className="modern-btn neon-btn"
 						>
-							{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+							<LogIn size={18} />
+							{isLoading ? "Logging in..." : "Login"}
 						</button>
-					</div>
+					</form>
 
-					<button
-						type="submit"
-						disabled={isLoading}
-						className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition"
-					>
-						<LogIn size={20} />
-						{isLoading ? "Logging in..." : "Login"}
-					</button>
-				</form>
+					<p className="register-text">
+						Don't have an account?{" "}
+						<Link to="/register" className="text-blue-400 font-medium hover:underline">
+							Register here
+						</Link>
+					</p>
+				</div>
 
-				<p className="text-center text-gray-600 text-sm mt-8">
-					Don't have an account?{" "}
-					<Link to="/register" className="text-blue-600 font-medium hover:underline">
-						Register here
-					</Link>
-				</p>
 			</div>
 		</div>
 	);
