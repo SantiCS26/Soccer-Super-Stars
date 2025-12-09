@@ -19,7 +19,7 @@ export default function GameSettings({
 				console.error("No roomId returned from /create");
 				return;
 			}
-			onHost({ roomId: data.roomId.toUpperCase(), mode: "host" });
+			onHost(data.roomId.toUpperCase());
 		} catch (err) {
 			console.error("Failed to create lobby:", err);
 			alert("Could not create lobby, please try again.");
@@ -32,18 +32,18 @@ export default function GameSettings({
 			alert("Enter a lobby code first.");
 			return;
 		}
-		onJoin({ roomId: trimmed, mode: "join" });
+		onJoin(trimmed);
 	};
 
 	const handleCompetitiveRandomClick = () => {
 		if (onCompetitive) {
-			onCompetitive({ mode: "competitive" });
+			onCompetitive();
 		}
 	};
 
 	const handleCasualRandomClick = () => {
 		if (onCasualSearch) {
-			onCasualSearch({ mode: "casual" });
+			onCasualSearch();
 		}
 	};
 
