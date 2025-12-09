@@ -1,91 +1,14 @@
 import { useEffect, useState } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
+import "../Pages-style/dashboard.css";
 
 export default function Dashboard() {
-	const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-	const navigate = useNavigate();
-	const location = useLocation();
-	
-	const navBarStyle = {
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "64px",
-        backgroundColor: "#1f2937",
-        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-        zIndex: 50,
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        fontFamily: "system-ui, -apple-system, sans-serif",
-    };
+    const navigate = useNavigate();
+    const location = useLocation();
 
-	const navContainerStyle = {
-        width: "100%",
-        maxWidth: "1400px",
-        padding: "0 30px",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-    };
-
-	const centerLinksStyle = {
-		display: "flex",
-		gap: "22px",
-		alignItems: "center",
-		justifyContent: "center",
-		flex: 1,
-	};
-
-	const dividerStyle = {
-		color: "rgba(255,255,255,0.4)",
-		fontSize: "16px",
-	};
-
-	const buttonStyle = {
-        padding: "8px 16px",
-        borderRadius: "6px",
-        border: "none",
-        cursor: "pointer",
-        fontSize: "14px",
-        fontWeight: "600",
-        transition: "opacity 0.2s",
-    };
-
-    const loginButtonStyle = {
-        ...buttonStyle,
-        color: "white",
-        backgroundColor: "#2563eb",
-    };
-
-    const logoutButtonStyle = {
-        ...buttonStyle,
-        color: "white",
-        backgroundColor: "#dc2626",
-    };
-
-    const getNavLinkStyle = ({ isActive }) => ({
-        color: "white",
-        textDecoration: "none",
-        padding: "8px 12px",
-        borderRadius: "6px",
-        fontSize: "15px",
-        fontWeight: "500",
-        transition: "background-color 0.2s",
-        backgroundColor: isActive ? "rgba(255, 255, 255, 0.1)" : "transparent",
-        opacity: isActive ? 1 : 0.8,
-    });
-
-	const authContainerStyle = {
-        marginLeft: "auto",
-        display: "flex",
-        alignItems: "center"
-    };
-
-
-	useEffect(() => {
+    useEffect(() => {
         const checkLogin = async () => {
             try {
                 const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -106,60 +29,70 @@ export default function Dashboard() {
         checkLogin();
     }, [location]);
 
-	const handleLogout = async () => {
-		try {
-			const API_BASE_URL = import.meta.env.VITE_API_URL;
-			const response = await fetch(`${API_BASE_URL}/api/logout`, {
-				method: "POST",
-				credentials: "include" 
-			});
+    const handleLogout = async () => {
+        try {
+            const API_BASE_URL = import.meta.env.VITE_API_URL;
+            const response = await fetch(`${API_BASE_URL}/api/logout`, {
+                method: "POST",
+                credentials: "include" 
+            });
 
-			if (response.ok) {
-				navigate("/");
-				setIsLoggedIn(false); 
-			} else {
-				alert("Logout failed");
-			}
-		} catch (err) {
-			console.error("Logout error:", err);
-			alert("Server error during logout");
-		}
-	};
+            if (response.ok) {
+                navigate("/");
+                setIsLoggedIn(false); 
+            } else {
+                alert("Logout failed");
+            }
+        } catch (err) {
+            console.error("Logout error:", err);
+            alert("Server error during logout");
+        }
+    };
 
-	return (
-		<>
-            <nav style={navBarStyle}>
-                <div style={navContainerStyle}>
+    return (
+        <>
+            <nav className="nav-bar">
+                <div className="nav-container">
+                    <NavLink to="/" className="nav-logo">
+                        <span className="logo-emoji">⚽</span>
+                        <span className="logo-text">Soccer Super Stars</span>
+                    </NavLink>
                     
-                    <div style={centerLinksStyle}>
-                        <NavLink to="/" style={getNavLinkStyle}>🏠 Home</NavLink>
-						<span style={dividerStyle}>|</span>
+                    <div className="nav-links">
+                        <NavLink to="/" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+                            🏠 Home
+                        </NavLink>
+                        <span className="nav-divider">|</span>
 
-						<NavLink to="/game" style={getNavLinkStyle}>⚽ Play</NavLink>
-						<span style={dividerStyle}>|</span>
+                        <NavLink to="/game" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+                            🎮 Play
+                        </NavLink>
+                        <span className="nav-divider">|</span>
 
-						<NavLink to="/leaderboard" style={getNavLinkStyle}>🏆 Leaderboard</NavLink>
-						{isLoggedIn && <>
-						<span style={dividerStyle}>|</span>
-						<NavLink to="/profile" style={getNavLinkStyle}>👤 Profile</NavLink>
-						</>}
+                        <NavLink to="/leaderboard" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+                            🏆 Leaderboard
+                        </NavLink>
+                        {isLoggedIn && <>
+                            <span className="nav-divider">|</span>
+                            <NavLink to="/profile" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+                                👤 Profile
+                            </NavLink>
+                        </>}
                     </div>
 
-                    <div style={authContainerStyle}>
+                    <div className="auth-container">
                         {isLoggedIn ? (
-                            <button onClick={handleLogout} style={logoutButtonStyle}>
+                            <button onClick={handleLogout} className="auth-button logout-button">
                                 Logout
                             </button>
                         ) : (
-                            <NavLink to="/login" style={loginButtonStyle}>
+                            <NavLink to="/login" className="auth-button login-button">
                                 Login / Register
                             </NavLink>
                         )}
                     </div>
                 </div>
             </nav>
-
-            <div style={{ height: "64px" }}></div>
         </>
-	);
+    );
 }

@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import "../Pages-style/global.css"
 import "../Pages-style/leaderboard.css";
 import playerLeft from "../../design_images/soccer-player-left.png";
 import playerRight from "../../design_images/soccer-player-right.png";
