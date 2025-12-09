@@ -51,11 +51,6 @@
     opacity: 0.9;
     margin-top: 12px;
 }
-.hero-image {
-    width: 100%;
-    margin-top: 40px;
-    filter: drop-shadow(0 0 10px rgba(255,255,255,0.1));
-}
 
 .login-card {
     flex: 1;
