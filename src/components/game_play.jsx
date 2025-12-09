@@ -308,6 +308,7 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 			setCanMove(false);
 		}
 
+		//testing
 		function handleMatchEnded({ score, winnerSide }) {
 			console.log("Match ended:", score, "winner:", winnerSide);
 
