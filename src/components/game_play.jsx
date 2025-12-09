@@ -77,6 +77,27 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 	const [myHeldPowerup, setMyHeldPowerup] = useState(null);
 	const [myActivePowerup, setMyActivePowerup] = useState(null);
 
+	useEffect(() => {
+		const preventScroll = (e) => {
+			const gameKeys = [
+				'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight',
+				' ', 'Space',
+				'w', 'W', 'a', 'A', 's', 'S', 'd', 'D',
+				'k', 'K', 'l', 'L'
+			];
+
+			if (gameKeys.includes(e.key) || gameKeys.includes(e.code)) {
+				e.preventDefault();
+			}
+		};
+
+		window.addEventListener('keydown', preventScroll, { passive: false });
+
+		return () => {
+			window.removeEventListener('keydown', preventScroll);
+		};
+	}, []);
+
 	const reportMatchResult = async (won, isCompetitive) => {
 		if (!isCompetitive || scoreReportedRef.current) {
 			return;
