@@ -31,6 +31,8 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 	const lastUseKeyDownRef = useRef(false);
 	const lastDiscardKeyDownRef = useRef(false);
 
+	const scoreReportedRef = useRef(false);
+
 	let localStartX = fieldWidth / 4;
 	let remoteStartX = (fieldWidth / 4) * 3;
 
@@ -74,6 +76,33 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 	const [powerups, setPowerups] = useState([]);
 	const [myHeldPowerup, setMyHeldPowerup] = useState(null);
 	const [myActivePowerup, setMyActivePowerup] = useState(null);
+
+	const reportMatchResult = async (won, isCompetitive) => {
+		if (!isCompetitive || scoreReportedRef.current) {
+			return;
+		}
+
+		scoreReportedRef.current = true;
+
+		try {
+			const API_BASE_URL = import.meta.env.VITE_API_URL;
+			const response = await fetch(`${API_BASE_URL}/api/match-result`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ roomId, won }),
+				credentials: "include",
+			});
+
+			if (response.ok) {
+				const data = await response.json();
+				console.log("Score updated:", data);
+			} else {
+				console.error("Failed to update score");
+			}
+		} catch (error) {
+			console.error("Error reporting match result:", error);
+		}
+	};
 
 	useEffect(() => {
 		if (!socket || !roomId) {
@@ -366,6 +395,23 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 
 			setCanMove(false);
 
+			let myScore;
+			let opponentScore;
+
+			if (isHost) {
+				myScore = score.left;
+				opponentScore = score.right;
+			} else {
+				myScore = score.right;
+				opponentScore = score.left;
+			}
+
+			const won = myScore > opponentScore;
+
+			if (isCompetitive) {
+				reportMatchResult(won, isCompetitive);
+			}
+
 			if (onExit) {
 				onExit();
 			}
@@ -389,7 +435,7 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 			socket.off("matchEnded", handleMatchEnded);
 			socket.off("opponentLeft", handleOpponentLeft);
 		};
-	}, [socket, roomId, onExit]);
+	}, [socket, roomId, onExit, isHost]);
 
 	const wrapperStyle = {
 		width: fieldWidth,
