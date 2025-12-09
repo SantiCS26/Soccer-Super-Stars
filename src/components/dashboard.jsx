@@ -4,37 +4,50 @@ import "../Pages-style/dashboard.css";
 
 export default function Dashboard() {
 	const [isLoggedIn, setIsLoggedIn] = useState(false);
+	const [isChecking, setIsChecking] = useState(true);
 
 	const navigate = useNavigate();
 	const location = useLocation();
 
 	useEffect(() => {
 		const checkLogin = async () => {
+		setIsChecking(true);
 			try {
 				const API_BASE_URL = import.meta.env.VITE_API_URL;
 
 				const res = await fetch(`${API_BASE_URL}/api/validate-token`, {
 					method: "GET",
 					credentials: "include",
+					headers: {
+						'Accept': 'application/json',
+						'Content-Type': 'application/json'
+					}
 				});
 
 				const data = await res.json();
+				console.log("Login check result:", data); // Debug log
 				setIsLoggedIn(data.valid === true);
 			} catch (err) {
 				console.error("Login check failed:", err);
 				setIsLoggedIn(false);
+			} finally {
+				setIsChecking(false);
 			}
 		};
 
 		checkLogin();
-	}, [location]);
+	}, [location.pathname]);
 
 	const handleLogout = async () => {
 		try {
 			const API_BASE_URL = import.meta.env.VITE_API_URL;
 			const response = await fetch(`${API_BASE_URL}/api/logout`, {
 				method: "POST",
-				credentials: "include" 
+				credentials: "include",
+				headers: {
+					'Accept': 'application/json',
+					'Content-Type': 'application/json'
+				} 
 			});
 
 			if (response.ok) {
@@ -48,6 +61,39 @@ export default function Dashboard() {
 			alert("Server error during logout");
 		}
 	};
+
+	if (isChecking) {
+		return (
+			<nav className="nav-bar">
+				<div className="nav-container">
+					<NavLink to="/" className="nav-logo">
+						<span className="logo-emoji">⚽</span>
+						<span className="logo-text">Soccer Super Stars</span>
+					</NavLink>
+					
+					<div className="nav-links">
+						<NavLink to="/" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+							🏠 Home
+						</NavLink>
+						<span className="nav-divider">|</span>
+
+						<NavLink to="/game" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+							🎮 Play
+						</NavLink>
+						<span className="nav-divider">|</span>
+
+						<NavLink to="/leaderboard" className={({ isActive }) => isActive ? "nav-link active" : "nav-link"}>
+							🏆 Leaderboard
+						</NavLink>
+					</div>
+
+					<div className="auth-container">
+						<span className="auth-button" style={{ opacity: 0.5 }}>Loading...</span>
+					</div>
+				</div>
+			</nav>
+		);
+	}
 
 	return (
 		<>

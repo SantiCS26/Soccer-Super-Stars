@@ -81,13 +81,15 @@
     cors: {
       origin: ["http://localhost:5173", "https://soccer-super-stars.fly.dev"],
       methods: ["GET", "POST"],
+      credentials: true
     }
   });
 
   app.use(cors({
     origin: ["http://localhost:5173", "https://soccer-super-stars.fly.dev"],
     methods: ["GET","POST","OPTIONS"],
-    allowedHeaders: ["Content-Type"],
+    allowedHeaders: ["Content-Type", "Cookie"],
+    exposedHeaders: ["Set-Cookie"],
     credentials: true
   }));
   app.use(cookieParser());
@@ -114,6 +116,8 @@
       httpOnly: true,
       secure: true,
       sameSite: "none",
+      path: "/",
+      maxAge: 7 * 24 * 60 * 60 * 1000
   };
 
 
@@ -186,16 +190,24 @@
   });
 
   app.get("/api/validate-token", (req, res) => {
-      const { token } = req.cookies;
+      try {
+        const { token } = req.cookies;
+        
+        console.log("Validating token:", token);
+        console.log("Available tokens:", Object.keys(tokenStorage));
 
-      if (token && tokenStorage[token]) {
-          return res.json({ 
+        if (token && tokenStorage[token]) {
+            return res.json({ 
               valid: true, 
               username: tokenStorage[token] 
-          });
-      }
+            });
+        }
 
-      return res.json({ valid: false });
+        return res.json({ valid: false });
+      } catch (error) {
+        console.error("Token validation error:", error);
+        return res.json({ valid: false });
+      }
   });
 
   app.post("/api/register", async (req, res) => {
@@ -245,8 +257,9 @@
 
       res.cookie("token", token, cookieOptions);
       return res.status(200).json({
-      message: "Login successful",
-      user: { username: user.username }
+        message: "Login successful",
+        user: { username: user.username },
+        token: token
       });
     } catch (err) {
       console.error("Login error:", err);
@@ -275,6 +288,7 @@
       httpOnly: true,
       secure: true,
       sameSite: "none",
+      path: "/",
       expires: new Date(0)
     });
     return res.sendStatus(200);
