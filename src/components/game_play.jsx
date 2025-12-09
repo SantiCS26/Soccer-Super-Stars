@@ -390,7 +390,7 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 		}
 
 		//testing
-		function handleMatchEnded({ score, winnerSide }) {
+		function handleMatchEnded({ score, winnerSide, isCompetitive }) {
 			console.log("Match ended:", score, "winner:", winnerSide);
 
 			setCanMove(false);
