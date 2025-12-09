@@ -96,12 +96,21 @@
 }
 .password-toggle {
     position: absolute;
-    top: 13px;
+    top: 50%;
+    transform: translateY(-50%);
     right: 14px;
     color: #999;
     background: none;
     border: none;
     cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+.password-toggle:hover {
+    color: #d1d5db;
 }
 .neon-btn {
     background: linear-gradient(135deg, #2563eb, #7c3aed);

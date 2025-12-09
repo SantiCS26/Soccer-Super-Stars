@@ -268,52 +268,53 @@
   });
 
   app.post("/api/match-result", async (req, res) => {
-  const { token } = req.cookies;
-  const { roomId, won } = req.body;
+    const { token } = req.cookies;
+    const { roomId, won } = req.body;
+    console.log("Match result received:", { token, roomId, won });
 
-  if (!token || !tokenStorage[token]) {
-    return res.status(401).json({ message: "Not logged in" });
-  }
+    if (!token || !tokenStorage[token]) {
+      return res.status(401).json({ message: "Not logged in" });
+    }
 
-  if (!roomId || typeof won !== "boolean") {
-    return res.status(400).json({ message: "Invalid data" });
-  }
+    if (!roomId || typeof won !== "boolean") {
+      return res.status(400).json({ message: "Invalid data" });
+    }
 
-  const username = tokenStorage[token];
-  const upperRoomId = roomId.toUpperCase();
-  const room = rooms[upperRoomId];
+    const username = tokenStorage[token];
+    const upperRoomId = roomId.toUpperCase();
+    const room = rooms[upperRoomId];
 
-  if (!room || !room.isCompetitive) {
-    return res.json({ message: "Not a competitive match or room not found" });
-  }
+    if (!room || !room.isCompetitive) {
+      return res.json({ message: "Not a competitive match or room not found" });
+    }
 
-  try {
-    const scoreChange = won ? 5 : -5;
-    
-    await pool.query(
-      "UPDATE users SET score = score + $1 WHERE username = $2",
-      [scoreChange, username]
-    );
+    try {
+      const scoreChange = won ? 5 : -5;
+      
+      await pool.query(
+        "UPDATE users SET score = score + $1 WHERE username = $2",
+        [scoreChange, username]
+      );
 
-    const result = await pool.query(
-      "SELECT score FROM users WHERE username = $1",
-      [username]
-    );
+      const result = await pool.query(
+        "SELECT score FROM users WHERE username = $1",
+        [username]
+      );
 
-    const newScore = result.rows[0]?.score || 0;
+      const newScore = result.rows[0]?.score || 0;
 
-    console.log(`Updated score for ${username}: ${won ? "+" : ""}${scoreChange} (new total: ${newScore})`);
+      console.log(`Updated score for ${username}: ${won ? "+" : ""}${scoreChange} (new total: ${newScore})`);
 
-    return res.json({ 
-      success: true, 
-      scoreChange,
-      newScore 
-    });
-  } catch (err) {
-    console.error("Score update error:", err);
-    return res.status(500).json({ message: "Server error updating score" });
-  }
-});
+      return res.json({ 
+        success: true, 
+        scoreChange,
+        newScore 
+      });
+    } catch (err) {
+      console.error("Score update error:", err);
+      return res.status(500).json({ message: "Server error updating score" });
+    }
+  });
 
 
   let authorize = (req, res, next) => {
