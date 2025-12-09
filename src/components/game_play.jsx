@@ -494,11 +494,28 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 		if (!typeId) {
 			return "None";
 		}
+
 		switch (typeId) {
 			case "speed_boost":
 				return "4x Speed";
 			case "mega_kick":
 				return "4x Kick Power";
+			case "long_range":
+				return "Long Range";
+			case "tank_mode":
+				return "Tank Mode";
+			case "slippery_boots":
+				return "Slippery Boots";
+			case "hyper_dash":
+				return "Hyper Dash";
+			case "precision_kick":
+				return "Precision Kick";
+			case "sticky_shot":
+				return "Sticky Shot";
+			case "agility_mode":
+				return "Agility Mode";
+			case "heavy_weight":
+				return "Heavy Weight";
 			default:
 				return typeId;
 		}
