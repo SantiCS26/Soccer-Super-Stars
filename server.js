@@ -178,6 +178,35 @@
     }
   });
 
+  app.post("/api/updateScore", async (req, res) => {
+    try {
+      if (!req.session || !req.session.user) {
+        return res.status(401).json({ message: "Not logged in." });
+      }
+
+      const { amount } = req.body;
+
+      if (typeof amount !== "number") {
+        return res.status(400).json({ message: "Invalid score amount." });
+      }
+
+      const username = req.session.user.username;
+
+      const result = await pool.query(
+        `UPDATE users SET score = score + $1 WHERE username = $2 RETURNING score`,
+        [amount, username]
+      );
+
+      return res.json({
+        success: true,
+        newScore: result.rows[0].score
+      });
+    } catch (err) {
+      console.error("Score update error:", err);
+      res.status(500).json({ message: "Server error updating score." });
+    }
+  });
+
   app.post("/create", (req, res) => {
     const roomId = generateRoomCode();
     return res.json({ roomId });

@@ -308,10 +308,32 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 			setCanMove(false);
 		}
 
-		function handleMatchEnded({ score, winnerSide }) {
+		async function handleMatchEnded({ score, winnerSide }) {
 			console.log("Match ended:", score, "winner:", winnerSide);
 
 			setCanMove(false);
+
+			const iWon =
+			(isHost && winnerSide === "left") ||
+			(!isHost && winnerSide === "right");
+
+		if (iWon) {
+			try {
+				const API_BASE_URL = import.meta.env.VITE_API_URL;
+
+				const res = await fetch(`${API_BASE_URL}/api/updateScore`, {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					credentials: "include",
+					body: JSON.stringify({ amount: 5 })
+				});
+
+				const data = await res.json();
+				console.log("Score update:", data);
+			} catch (err) {
+				console.error("Error updating score:", err);
+			}
+		}
 
 			if (onExit) {
 				onExit();
