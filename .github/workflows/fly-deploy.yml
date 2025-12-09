@@ -6,7 +6,7 @@ on:
     branches:
       - main
       - Joe-branch
-      - santi-branch
+      - santi-branch2
 jobs:
   deploy:
     name: Deploy app
