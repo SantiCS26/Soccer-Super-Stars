@@ -1,6 +1,8 @@
 import { useState } from "react";
 import "../Pages-style/game_settings.css"
 
+import "../Pages-style/home.css"
+
 export default function GameSettings({
 	onHost,
 	onJoin,
@@ -49,51 +51,81 @@ export default function GameSettings({
 
 	return (
 		<div className="settingsBox">
-			<h3 className="settingsLabel">Create a Lobby</h3>
+			<div className="settingsColumn settingsColumn-left">
+				<div className="settingsGroup">
+					<h3 className="settingsSectionTitle">Matchmaking</h3>
+				</div>
 
-			<div className="settingsGroup">
-				<button
-					className="settingsButton"
-					onClick={handleHostClick}
-				>
-					Host Game
-				</button>
+				<div className="settingsGroup">
+					<h4 className="settingsSubLabel">Competitive</h4>
+					<p className="settingsOptionDescription">
+						Ranked games with balanced matchmaking. Your performance impacts your MMR.
+					</p>
+					<button
+						className="settingsButton randomCompetitive"
+						onClick={handleCompetitiveRandomClick}
+					>
+						Start Search
+					</button>
+				</div>
+
+				<div className="settingsGroup">
+					<h4 className="settingsSubLabel">Casual</h4>
+					<p className="settingsOptionDescription">
+						Unranked matches with relaxed rules. Great for practice, testing lineups, or playing with friends.
+					</p>
+					<button
+						className="settingsButton randomCasual"
+						onClick={handleCasualRandomClick}
+					>
+						Start Search
+					</button>
+				</div>
 			</div>
 
-			<div className="settingsGroup" style={{ marginTop: 24 }}>
-				<h3 className="settingsLabel">Join a Lobby</h3>
-				<input
-					type="text"
-					placeholder="Enter Lobby Code"
-					value={roomCode}
-					onChange={(e) => setRoomCode(e.target.value)}
-					className="settingsInput"
-				/>
-				<button
-					className="settingsButton"
-					style={{ marginTop: 12 }}
-					onClick={handleJoinClick}
-				>
-					Join Game
-				</button>
-			</div>
+			<div className="settingsDivider" />
 
-			<div className="settingsGroup randomGroup">
-				<h3 className="settingsLabel">Or Join Random Match</h3>
+			<div className="settingsColumn settingsColumn-right">
+				<div className="settingsGroup">
+					<h3 className="settingsSectionTitle">Lobbies</h3>
+				</div>
 
-				<button
-					className="settingsButton randomCompetitive"
-					onClick={handleCompetitiveRandomClick}
-				>
-					Competitive Match
-				</button>
+				<div className="settingsGroup">
+					<h4 className="settingsSubLabel">Host Game</h4>
+					<p className="settingsOptionDescription">
+						Create a lobby and share the code so others can join. You control when the match starts.
+					</p>
+					<div className="settingsOption">
+						<button
+							className="settingsButton"
+							onClick={handleHostClick}
+						>
+							Host Lobby
+						</button>
+					</div>
+				</div>
 
-				<button
-					className="settingsButton randomCasual"
-					onClick={handleCasualRandomClick}
-				>
-					Casual Match
-				</button>
+				<div className="settingsGroup">
+					<h4 className="settingsSubLabel">Join Game</h4>
+					<p className="settingsOptionDescription">
+						Use a lobby code from a friend or host to jump directly into their match.
+					</p>
+					<input
+						type="text"
+						placeholder="Enter Lobby Code"
+						value={roomCode}
+						onChange={(e) => setRoomCode(e.target.value)}
+						className="settingsInput"
+					/>
+					<div className="settingsOption">
+						<button
+							className="settingsButton"
+							onClick={handleJoinClick}
+						>
+							Join Lobby
+						</button>
+					</div>
+				</div>
 			</div>
 		</div>
 	);

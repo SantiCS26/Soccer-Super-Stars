@@ -1,120 +1,218 @@
 .lobbyContainer {
-	width: 900px;
-	height: 580px;
-	margin: 20px auto;
-	border: 1px solid #ccc;
-	border-radius: 6px;
-	display: flex;
-	flex-direction: column;
-	background: #1f2937;
-	color: #ffffff;
-	box-sizing: border-box;
-	padding: 20px;
+	max-width: 900px;
+	width: 100%;
+	margin: 0 auto;
+	background: rgba(20, 25, 40, 0.9);
+	border: 2px solid var(--card-border);
+	border-radius: 20px;
+	padding: 40px;
+	box-shadow: var(--card-shadow);
 }
 
 .lobbyHeader {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	margin-bottom: 16px;
+	margin-bottom: 40px;
+	padding-bottom: 24px;
+	border-bottom: 2px solid var(--card-border);
 }
 
 .lobbyTitle {
+	font-size: 2rem;
+	font-weight: 800;
+	color: var(--text-primary);
 	margin: 0;
-	font-size: 1.4rem;
 }
 
 .lobbyCode {
-	font-size: 0.95rem;
-	letter-spacing: 0.08em;
+	font-size: 1.1rem;
+	color: var(--text-secondary);
+	background: rgba(15, 23, 42, 0.6);
+	padding: 12px 24px;
+	border-radius: 12px;
+	border: 1px solid var(--card-border);
+}
+
+.lobbyCode strong {
+	color: var(--accent-primary);
+	font-weight: 700;
+	font-size: 1.25rem;
+	letter-spacing: 2px;
 }
 
 .lobbyMain {
 	display: flex;
-	flex: 1;
-	gap: 24px;
+	gap: 40px;
+	margin-bottom: 32px;
 }
 
 .lobbyColumn {
 	flex: 1;
-	display: flex;
-	flex-direction: column;
-}
-
-.lobbyColumn--players {
-	border-right: 1px solid #374151;
-	padding-right: 16px;
 }
 
 .lobbySubTitle {
-	margin: 0;
-	font-size: 1.5rem;
+	font-size: 1.25rem;
+	font-weight: 700;
+	color: var(--text-primary);
+	margin: 0 0 20px 0;
+	text-align: center;
 }
 
 .lobbyPlayersBox {
-	margin-top: 8px;
-	background: #111827;
-	border-radius: 4px;
-	padding: 8px;
-	font-size: 0.9rem;
+	background: rgba(15, 23, 42, 0.4);
+	border: 1px solid var(--card-border);
+	border-radius: 12px;
+	padding: 20px;
+	min-height: 150px;
 }
 
 .lobbyPlayersEmpty {
-	opacity: 0.7;
+	color: var(--text-secondary);
+	text-align: center;
+	padding: 40px 20px;
+	font-style: italic;
 }
 
 .lobbyPlayerRow {
 	display: flex;
-	align-items: center;
 	justify-content: space-between;
-	padding: 4px 0;
-	border-bottom: 1px solid rgba(55, 65, 81, 0.6);
+	align-items: center;
+	padding: 12px 16px;
+	margin-bottom: 8px;
+	background: rgba(59, 130, 246, 0.1);
+	border-radius: 8px;
+	border-left: 3px solid var(--accent-primary);
 }
 
 .lobbyPlayerId {
-	font-family: monospace;
+	font-weight: 600;
+	color: var(--text-primary);
 }
 
 .lobbyPlayerFlags {
-	margin-left: 4px;
-	font-size: 0.85rem;
-	color: #d1d5db;
+	font-size: 0.9rem;
+	color: var(--accent-primary);
+	font-weight: 600;
 }
 
 .lobbyColumn--options {
-	padding-left: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
 }
 
 .lobbyOptionRow {
-	margin-top: 8px;
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	padding: 20px;
+	background: rgba(15, 23, 42, 0.4);
+	border: 1px solid var(--card-border);
+	border-radius: 12px;
+}
+
+.settingsLabel {
+	font-size: 0.95rem;
+	font-weight: 600;
+	color: var(--text-secondary);
+	text-transform: uppercase;
+	letter-spacing: 1px;
+}
+
+.settingsSelect {
+	padding: 12px 16px;
+	border-radius: 8px;
+	border: 2px solid var(--card-border);
+	background: rgba(15, 23, 42, 0.6);
+	color: var(--text-primary);
+	font-size: 1rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.3s ease;
+}
+
+.settingsSelect:hover:not(:disabled) {
+	border-color: var(--accent-primary);
+	background: rgba(15, 23, 42, 0.8);
+}
+
+.settingsSelect:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
 }
 
 .lobbyNote {
-	margin-top: 12px;
-	font-size: 0.8rem;
-	opacity: 0.8;
+	font-size: 0.85rem;
+	color: var(--text-secondary);
+	text-align: center;
+	padding: 16px;
+	background: rgba(139, 92, 246, 0.1);
+	border-radius: 8px;
+	border-left: 3px solid var(--accent-secondary);
+	margin-top: 8px;
 }
 
 .lobbyButtonRow {
 	display: flex;
 	justify-content: space-between;
-	margin-top: 16px;
+	gap: 16px;
+	padding-top: 24px;
+	border-top: 2px solid var(--card-border);
 }
 
 .lobbyButton {
-	padding: 8px 16px;
-	border-radius: 4px;
+	flex: 1;
+	padding: 14px 32px;
+	border-radius: 10px;
 	border: none;
 	cursor: pointer;
-	font-size: 0.95rem;
+	font-size: 1rem;
+	font-weight: 600;
+	letter-spacing: 0.5px;
+	transition: all 0.3s ease;
 }
 
 .lobbyButton--primary {
-	background-color: #0d6efd;
-	color: #ffffff;
+	background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+	color: white;
+	box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+}
+
+.lobbyButton--primary:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
 }
 
 .lobbyButton--secondary {
-	background-color: #4b5563;
-	color: #ffffff;
+	background-color: rgba(255, 255, 255, 0.1);
+	color: var(--text-primary);
+	border: 2px solid var(--card-border);
+}
+
+.lobbyButton--secondary:hover {
+	background-color: rgba(255, 255, 255, 0.12);
+	border-color: var(--accent-primary);
+	transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+	.lobbyContainer {
+		padding: 24px;
+	}
+
+	.lobbyHeader {
+		flex-direction: column;
+		gap: 16px;
+		text-align: center;
+	}
+
+	.lobbyMain {
+		flex-direction: column;
+		gap: 24px;
+	}
+
+	.lobbyButtonRow {
+		flex-direction: column;
+	}
 }

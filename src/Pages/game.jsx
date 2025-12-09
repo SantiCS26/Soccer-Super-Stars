@@ -5,6 +5,9 @@ import GameSettings from "../components/game_settings.jsx";
 import GamePlay from "../components/game_play.jsx";
 import Lobby from "../components/lobby.jsx";
 
+import "../Pages-style/home.css";
+import "../Pages-style/game.css";
+
 const SOCKET_URL =
 	import.meta.env.DEV
 		? "http://localhost:8080"
@@ -346,14 +349,14 @@ export default function GamePage() {
 
 		content = (
 			<div className="searchingBox">
-				<h2>Searching for a {label} match…</h2>
+				<h2>Searching for a {label} match</h2>
 				<p>Time in queue: {searchElapsed}s</p>
 			</div>
 		);
 	} else if (phase === "matchFound" && matchFoundInfo) {
 		content = (
 			<div className="matchFoundBox">
-				<h2>Match found!</h2>
+				<h2>Match Found!</h2>
 				<p>
 					{matchFoundInfo.you} vs {matchFoundInfo.opponent}
 				</p>
@@ -385,9 +388,10 @@ export default function GamePage() {
 	}
 
 	return (
-		<div className="pageWrapper">
-			<h1 className="pageTitle">Play Game</h1>
-			{content}
+		<div className="home-container">
+			<div className="hero-visual">
+				{content}
+			</div>
 		</div>
 	);
 }
