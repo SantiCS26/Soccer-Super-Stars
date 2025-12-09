@@ -393,8 +393,8 @@ async function deleteSession(token) {
   });
 
   app.post("/api/upload-avatar", authorize, upload.single("avatar"), async (req, res) => {
-    const { token } = req.cookies;
-    const username = tokenStorage[token];
+    // Now req.username is set by the authorize middleware
+    const username = req.username;
 
     if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
@@ -413,7 +413,7 @@ async function deleteSession(token) {
         console.error("Avatar update error:", err);
         return res.status(500).json({ message: "Server error saving avatar" });
     }
-});
+  });
 
   function tryMatchCompetitivePlayers() {
     if (competitiveQueue.length < 2) return null;
@@ -423,10 +423,10 @@ async function deleteSession(token) {
     const roomId = generateRoomCode();
 
     rooms[roomId] = {
-      settings: { matchDurationSec: 180, goalLimit: 5 },
-      players: {},
-      game: null,
-      isCompetitive: true
+        settings: { matchDurationSec: 180, goalLimit: 5 },
+        players: {},
+        game: null,
+        isCompetitive: true
     };
 
     return { roomId, p1, p2 };
@@ -441,25 +441,25 @@ async function deleteSession(token) {
     const roomId = generateRoomCode();
 
     rooms[roomId] = {
-      settings: { matchDurationSec: 180, goalLimit: 5 },
-      players: {},
-      game: null,
-      isCompetitive: false
+        settings: { matchDurationSec: 180, goalLimit: 5 },
+        players: {},
+        game: null,
+        isCompetitive: false
     };
 
     return { roomId, p1, p2 };
   }
 
   app.post("/join-casual", authorize, async (req, res) => {
-    const { token } = req.cookies;
-    const username = tokenStorage[token];
+    // Now req.username is set by the authorize middleware
+    const username = req.username;
 
     if (!username) {
-      return res.status(401).json({ message: "Not logged in" });
+        return res.status(401).json({ message: "Not logged in" });
     }
 
     if (casualQueue.find(p => p.username === username)) {
-      return res.json({ matched: false });
+        return res.json({ matched: false });
     }
 
     casualQueue.push({ username });
@@ -468,69 +468,69 @@ async function deleteSession(token) {
     const match = tryMatchCasualPlayers();
 
     if (match) {
-      const { roomId, p1, p2 } = match;
-      const p1SocketId = usernameToSocketId[p1.username];
-      const p2SocketId = usernameToSocketId[p2.username];
+        const { roomId, p1, p2 } = match;
+        const p1SocketId = usernameToSocketId[p1.username];
+        const p2SocketId = usernameToSocketId[p2.username];
 
-      if (!p1SocketId || !p2SocketId) {
-        console.warn("Sockets not ready yet");
-        casualQueue.push(p1, p2);
-        return res.json({ matched: false });
-      }
+        if (!p1SocketId || !p2SocketId) {
+            console.warn("Sockets not ready yet");
+            casualQueue.push(p1, p2);
+            return res.json({ matched: false });
+        }
 
-      const p1Socket = io.sockets.sockets.get(p1SocketId);
-      const p2Socket = io.sockets.sockets.get(p2SocketId);
-      
-      if (p1Socket) p1Socket.join(roomId);
-      if (p2Socket) p2Socket.join(roomId);
+        const p1Socket = io.sockets.sockets.get(p1SocketId);
+        const p2Socket = io.sockets.sockets.get(p2SocketId);
+        
+        if (p1Socket) p1Socket.join(roomId);
+        if (p2Socket) p2Socket.join(roomId);
 
-      rooms[roomId].players = {
-        [p1SocketId]: { id: p1SocketId, username: p1.username, isHost: true },
-        [p2SocketId]: { id: p2SocketId, username: p2.username, isHost: false }
-      };
+        rooms[roomId].players = {
+            [p1SocketId]: { id: p1SocketId, username: p1.username, isHost: true },
+            [p2SocketId]: { id: p2SocketId, username: p2.username, isHost: false }
+        };
 
-      rooms[roomId].game = createInitialGameState(rooms[roomId]);
+        rooms[roomId].game = createInitialGameState(rooms[roomId]);
 
-      io.to(p1SocketId).emit("casualMatched", {
-        roomId,
-        you: p1.username,
-        opponent: p2.username,
-        isHost: true
-      });
-      io.to(p2SocketId).emit("casualMatched", {
-        roomId,
-        you: p2.username,
-        opponent: p1.username,
-        isHost: false
-      });
-
-      setTimeout(() => {
-        io.to(p1SocketId).emit("gameStarted", {
-          roomId: roomId,
-          settings: rooms[roomId].settings
+        io.to(p1SocketId).emit("casualMatched", {
+            roomId,
+            you: p1.username,
+            opponent: p2.username,
+            isHost: true
         });
-        io.to(p2SocketId).emit("gameStarted", {
-          roomId: roomId,
-          settings: rooms[roomId].settings
+        io.to(p2SocketId).emit("casualMatched", {
+            roomId,
+            you: p2.username,
+            opponent: p1.username,
+            isHost: false
         });
-      }, 3000);
 
-      return res.json({ matched: true, roomId });
+        setTimeout(() => {
+            io.to(p1SocketId).emit("gameStarted", {
+                roomId: roomId,
+                settings: rooms[roomId].settings
+            });
+            io.to(p2SocketId).emit("gameStarted", {
+                roomId: roomId,
+                settings: rooms[roomId].settings
+            });
+        }, 3000);
+
+        return res.json({ matched: true, roomId });
     }
 
     return res.json({ matched: false });
   });
 
   app.post("/join-competitive", authorize, async (req, res) => {
-    const { token } = req.cookies;
-    const username = tokenStorage[token];
+    // Now req.username is set by the authorize middleware
+    const username = req.username;
 
     if (!username) {
-      return res.status(401).json({ message: "Not logged in" });
+        return res.status(401).json({ message: "Not logged in" });
     }
 
     if (competitiveQueue.find(p => p.username === username)) {
-      return res.json({ matched: false });
+        return res.json({ matched: false });
     }
 
     competitiveQueue.push({ username });
@@ -539,54 +539,54 @@ async function deleteSession(token) {
     const match = tryMatchCompetitivePlayers();
 
     if (match) {
-      const { roomId, p1, p2 } = match;
-      const p1SocketId = usernameToSocketId[p1.username];
-      const p2SocketId = usernameToSocketId[p2.username];
+        const { roomId, p1, p2 } = match;
+        const p1SocketId = usernameToSocketId[p1.username];
+        const p2SocketId = usernameToSocketId[p2.username];
 
-      if (!p1SocketId || !p2SocketId) {
-        console.warn("Sockets not ready yet");
-        competitiveQueue.push(p1, p2);
-        return res.json({ matched: false });
-      }
+        if (!p1SocketId || !p2SocketId) {
+            console.warn("Sockets not ready yet");
+            competitiveQueue.push(p1, p2);
+            return res.json({ matched: false });
+        }
 
-      const p1Socket = io.sockets.sockets.get(p1SocketId);
-      const p2Socket = io.sockets.sockets.get(p2SocketId);
-      
-      if (p1Socket) p1Socket.join(roomId);
-      if (p2Socket) p2Socket.join(roomId);
+        const p1Socket = io.sockets.sockets.get(p1SocketId);
+        const p2Socket = io.sockets.sockets.get(p2SocketId);
+        
+        if (p1Socket) p1Socket.join(roomId);
+        if (p2Socket) p2Socket.join(roomId);
 
-      rooms[roomId].players = {
-        [p1SocketId]: { id: p1SocketId, username: p1.username, isHost: true },
-        [p2SocketId]: { id: p2SocketId, username: p2.username, isHost: false }
-      };
+        rooms[roomId].players = {
+            [p1SocketId]: { id: p1SocketId, username: p1.username, isHost: true },
+            [p2SocketId]: { id: p2SocketId, username: p2.username, isHost: false }
+        };
 
-      rooms[roomId].game = createInitialGameState(rooms[roomId]);
+        rooms[roomId].game = createInitialGameState(rooms[roomId]);
 
-      io.to(p1SocketId).emit("competitiveMatched", {
-        roomId,
-        you: p1.username,
-        opponent: p2.username,
-        isHost: true
-      });
-      io.to(p2SocketId).emit("competitiveMatched", {
-        roomId,
-        you: p2.username,
-        opponent: p1.username,
-        isHost: false
-      });
-
-      setTimeout(() => {
-        io.to(p1SocketId).emit("gameStarted", {
-          roomId: roomId,
-          settings: rooms[roomId].settings
+        io.to(p1SocketId).emit("competitiveMatched", {
+            roomId,
+            you: p1.username,
+            opponent: p2.username,
+            isHost: true
         });
-        io.to(p2SocketId).emit("gameStarted", {
-          roomId: roomId,
-          settings: rooms[roomId].settings
+        io.to(p2SocketId).emit("competitiveMatched", {
+            roomId,
+            you: p2.username,
+            opponent: p1.username,
+            isHost: false
         });
-      }, 3000);
 
-      return res.json({ matched: true, roomId });
+        setTimeout(() => {
+            io.to(p1SocketId).emit("gameStarted", {
+                roomId: roomId,
+                settings: rooms[roomId].settings
+            });
+            io.to(p2SocketId).emit("gameStarted", {
+                roomId: roomId,
+                settings: rooms[roomId].settings
+            });
+        }, 3000);
+
+        return res.json({ matched: true, roomId });
     }
 
     return res.json({ matched: false });
