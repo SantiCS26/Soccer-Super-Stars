@@ -317,23 +317,23 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 			(isHost && winnerSide === "left") ||
 			(!isHost && winnerSide === "right");
 
-		if (iWon) {
-			try {
-				const API_BASE_URL = import.meta.env.VITE_API_URL;
+			if (settings?.mode === "competitive" && iWon) {
+				try {
+					const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-				const res = await fetch(`${API_BASE_URL}/api/updateScore`, {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					credentials: "include",
-					body: JSON.stringify({ amount: 5 })
-				});
+					const res = await fetch(`${API_BASE_URL}/api/updateScore`, {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						credentials: "include",
+						body: JSON.stringify({ amount: 5 })
+					});
 
-				const data = await res.json();
-				console.log("Score update:", data);
-			} catch (err) {
-				console.error("Error updating score:", err);
+					const data = await res.json();
+					console.log("Score update:", data);
+				} catch (err) {
+					console.error("Error updating score:", err);
+				}
 			}
-		}
 
 			if (onExit) {
 				onExit();
