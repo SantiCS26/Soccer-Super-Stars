@@ -411,7 +411,7 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 		}
 
 		//testing
-		function handleMatchEnded({ score, winnerSide, isCompetitive }) {
+		async function handleMatchEnded({ score, winnerSide, isCompetitive }) {
 			console.log("Match ended:", score, "winner:", winnerSide);
 
 			setCanMove(false);
@@ -432,7 +432,7 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 			//test
 			if (isCompetitive) {
 				console.log("Reporting match result, won:", won);
-				reportMatchResult(won, isCompetitive);
+				await reportMatchResult(won, isCompetitive);
 			}
 
 			if (onExit) {
