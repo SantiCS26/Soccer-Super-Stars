@@ -267,6 +267,55 @@
     }
   });
 
+  app.post("/api/match-result", async (req, res) => {
+  const { token } = req.cookies;
+  const { roomId, won } = req.body;
+
+  if (!token || !tokenStorage[token]) {
+    return res.status(401).json({ message: "Not logged in" });
+  }
+
+  if (!roomId || typeof won !== "boolean") {
+    return res.status(400).json({ message: "Invalid data" });
+  }
+
+  const username = tokenStorage[token];
+  const upperRoomId = roomId.toUpperCase();
+  const room = rooms[upperRoomId];
+
+  if (!room || !room.isCompetitive) {
+    return res.json({ message: "Not a competitive match or room not found" });
+  }
+
+  try {
+    const scoreChange = won ? 5 : -5;
+    
+    await pool.query(
+      "UPDATE users SET score = score + $1 WHERE username = $2",
+      [scoreChange, username]
+    );
+
+    const result = await pool.query(
+      "SELECT score FROM users WHERE username = $1",
+      [username]
+    );
+
+    const newScore = result.rows[0]?.score || 0;
+
+    console.log(`Updated score for ${username}: ${won ? "+" : ""}${scoreChange} (new total: ${newScore})`);
+
+    return res.json({ 
+      success: true, 
+      scoreChange,
+      newScore 
+    });
+  } catch (err) {
+    console.error("Score update error:", err);
+    return res.status(500).json({ message: "Server error updating score" });
+  }
+});
+
+
   let authorize = (req, res, next) => {
     let { token } = req.cookies;
     console.log(token, tokenStorage);
@@ -327,7 +376,8 @@
     rooms[roomId] = {
       settings: { matchDurationSec: 180, goalLimit: 5 },
       players: {},
-      game: null
+      game: null,
+      isCompetitive: true
     };
 
     return { roomId, p1, p2 };
@@ -345,6 +395,7 @@
       settings: { matchDurationSec: 180, goalLimit: 5 },
       players: {},
       game: null,
+      isCompetitive: false
     };
 
     return { roomId, p1, p2 };
@@ -536,7 +587,8 @@
         if (!rooms[roomId]) {
           rooms[upperRoomId] = {
             settings: { ...DEFAULT_SETTINGS },
-            players: {}
+            players: {},
+            isCompetitive: false
           };
         }
       } else {
@@ -795,7 +847,10 @@
       }
 
       if (matchEnded) {
-        io.to(roomId).emit("matchEnded", matchEnded);
+        io.to(roomId).emit("matchEnded", {
+        ...matchEnded,
+        isCompetitive: room.isCompetitive
+        });
       }
     }
   }, PHYSICS_TICK_MS);
