@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import "../Pages-style/global.css";
 import "../Pages-style/profile.css";
 
 export default function Profile() {
