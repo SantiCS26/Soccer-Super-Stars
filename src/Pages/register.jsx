@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, User, Lock, UserPlus } from "lucide-react";
 import "../Pages-style/login.css";
 
+// Registration Page Component
 export default function Register() {
 	const [username, setUsername] = useState("");
 	const [password, setPassword] = useState("");
