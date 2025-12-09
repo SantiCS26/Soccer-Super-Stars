@@ -317,6 +317,9 @@ export default function GamePlay({ settings, roomId, socket, isHost, onExit }) {
 			(isHost && winnerSide === "left") ||
 			(!isHost && winnerSide === "right");
 
+			console.log("Did I win?", iWon);
+			console.log("Current settings:", settings);
+
 			if (settings?.mode === "competitive" && iWon) {
 				try {
 					const API_BASE_URL = import.meta.env.VITE_API_URL;
