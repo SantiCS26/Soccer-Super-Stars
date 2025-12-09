@@ -14,7 +14,9 @@
     createInitialGameState,
     updatePlayerPosition,
     applyKick,
-    stepGame
+    stepGame,
+    usePowerup,
+    discardPowerup
   } from "./src/Game/game_state.js";
 
   dotenv.config();
@@ -651,6 +653,36 @@
       applyKick(room.game, socket.id);
     });
 
+    socket.on("usePowerup", ({ roomId }) => {
+      if (!roomId) {
+        return;
+      }
+
+      const upperRoomId = roomId.toUpperCase();
+      const room = rooms[upperRoomId];
+
+      if (!room || !room.game) {
+        return;
+      }
+
+      usePowerup(room.game, socket.id, Date.now());
+    });
+
+    socket.on("discardPowerup", ({ roomId }) => {
+      if (!roomId) {
+        return;
+      }
+
+      const upperRoomId = roomId.toUpperCase();
+      const room = rooms[upperRoomId];
+
+      if (!room || !room.game) {
+        return;
+      }
+
+      discardPowerup(room.game, socket.id);
+    });
+
     socket.on("disconnect", () => {
       console.log(`Socket disconnected: ${socket.id}`);
 
@@ -739,7 +771,9 @@
       io.to(roomId).emit("gameState", {
         ball: room.game.ball,
         score: room.game.score,
-        round: room.game.round
+        round: room.game.round,
+        powerupsOnField: room.game.powerupsOnField,
+        playerPowerups: room.game.playerPowerups
       });
 
       if (roundReset) {

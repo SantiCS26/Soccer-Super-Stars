@@ -19,6 +19,138 @@ const PLAYER_BODY_RADIUS = PLAYER_SIZE / 2;
 const KICK_SLOW_DAMP = 0.9;
 const DRIBBLE_NUDGE_MULT = 5;
 
+const POWERUP_MIN_INTERVAL_MS = 15000;
+const POWERUP_MAX_INTERVAL_MS = 30000;
+const MAX_POWERUPS_ON_FIELD = 2;
+const POWERUP_RADIUS = 16;
+
+const POWERUP_DEFS = [
+	{
+		id: "speed_boost",
+		label: "4x Speed",
+		durationSec: 8,
+		effects: {
+			speedMultiplier: 4
+		}
+	},
+	{
+		id: "mega_kick",
+		label: "8x Kick Power",
+		durationSec: 8,
+		effects: {
+			kickPowerMultiplier: 8
+		}
+	}
+];
+
+function getRandomPowerupInterval() {
+	const span = POWERUP_MAX_INTERVAL_MS - POWERUP_MIN_INTERVAL_MS;
+	return POWERUP_MIN_INTERVAL_MS + Math.floor(Math.random() * span);
+}
+
+function getRandomPowerupType() {
+	if (!POWERUP_DEFS.length) {
+		return null;
+	}
+	const idx = Math.floor(Math.random() * POWERUP_DEFS.length);
+	return POWERUP_DEFS[idx];
+}
+
+function ensurePlayerPowerupState(game, playerId) {
+	if (!game.playerPowerups) {
+		game.playerPowerups = {};
+	}
+	if (!game.playerPowerups[playerId]) {
+		game.playerPowerups[playerId] = {
+			heldTypeId: null,
+			active: null
+		};
+	}
+	return game.playerPowerups[playerId];
+}
+
+function updateActivePowerups(game, now) {
+	if (!game.playerPowerups) {
+		return;
+	}
+
+	for (const [playerId, state] of Object.entries(game.playerPowerups)) {
+		if (state.active && state.active.expiresAt <= now) {
+			state.active = null;
+		}
+	}
+}
+
+function spawnPowerupIfNeeded(game, now) {
+	if (!game.powerupsOnField) {
+		game.powerupsOnField = [];
+	}
+
+	if (game.powerupsOnField.length >= MAX_POWERUPS_ON_FIELD) {
+		return;
+	}
+
+	if (!game.nextPowerupSpawnAt || now < game.nextPowerupSpawnAt) {
+		return;
+	}
+
+	const type = getRandomPowerupType();
+	if (!type) {
+		game.nextPowerupSpawnAt = now + getRandomPowerupInterval();
+		return;
+	}
+
+	const margin = 50;
+	const x = margin + Math.random() * (FIELD_WIDTH - margin * 2);
+	const y = margin + Math.random() * (FIELD_HEIGHT - margin * 2);
+
+	const instance = {
+		id: `${type.id}_${now}_${Math.floor(Math.random() * 100000)}`,
+		typeId: type.id,
+		x,
+		y
+	};
+
+	game.powerupsOnField.push(instance);
+	game.nextPowerupSpawnAt = now + getRandomPowerupInterval();
+}
+
+function handlePowerupPickup(game, playerId) {
+	if (!game || !game.isPlaying) {
+		return;
+	}
+	if (!game.powerupsOnField || !game.powerupsOnField.length) {
+		return;
+	}
+
+	const playerPos = game.playerPositions[playerId];
+	if (!playerPos) {
+		return;
+	}
+
+	const state = ensurePlayerPowerupState(game, playerId);
+	if (state.heldTypeId || state.active) {
+		return;
+	}
+
+	const playerCenterX = playerPos.x + PLAYER_BODY_RADIUS;
+	const playerCenterY = playerPos.y + PLAYER_BODY_RADIUS;
+	const pickupRadius = PLAYER_BODY_RADIUS + POWERUP_RADIUS;
+
+	for (let i = 0; i < game.powerupsOnField.length; i++) {
+		const p = game.powerupsOnField[i];
+		const dx = p.x - playerCenterX;
+		const dy = p.y - playerCenterY;
+		const distSq = dx * dx + dy * dy;
+
+		if (distSq <= pickupRadius * pickupRadius) {
+			state.heldTypeId = p.typeId;
+			game.powerupsOnField.splice(i, 1);
+			break;
+		}
+	}
+}
+
 export function createInitialGameState(room) {
 	const playerIds = Object.keys(room.players || {});
 	const hostId =
@@ -52,30 +184,33 @@ export function createInitialGameState(room) {
 		score: { left: 0, right: 0 },
 		round: 0,
 		isPlaying: true,
-		pendingGoal: null
+		pendingGoal: null,
+		powerupsOnField: [],
+		playerPowerups: {},
+		nextPowerupSpawnAt: null
 	};
 }
 
 export function updatePlayerPosition(game, playerId, x, y) {
 	if (!game || !playerId) {
-        return;
+		return;
 	}
 
-    const isLeftPlayer = playerId === game.leftPlayerId;
+	const isLeftPlayer = playerId === game.leftPlayerId;
 	const isRightPlayer = playerId === game.rightPlayerId;
 
-    let clampedY = Math.max(0, Math.min(FIELD_HEIGHT - PLAYER_SIZE, y));
+	let clampedY = Math.max(0, Math.min(FIELD_HEIGHT - PLAYER_SIZE, y));
 
-    const goalTop = FIELD_HEIGHT * GOAL_TOP_FACTOR;
+	const goalTop = FIELD_HEIGHT * GOAL_TOP_FACTOR;
 	const goalBottom = FIELD_HEIGHT * GOAL_BOTTOM_FACTOR;
 	const playerTop = clampedY;
 	const playerBottom = clampedY + PLAYER_SIZE;
 	const inGoalMouth = playerBottom > goalTop && playerTop < goalBottom;
 
-    let minX = 0;
+	let minX = 0;
 	let maxX = FIELD_WIDTH - PLAYER_SIZE;
 
-    if (inGoalMouth) {
+	if (inGoalMouth) {
 		if (isLeftPlayer) {
 			minX = -GOAL_DEPTH;
 		} else if (isRightPlayer) {
@@ -83,20 +218,22 @@ export function updatePlayerPosition(game, playerId, x, y) {
 		}
 	}
 
-    const clampedX = Math.max(minX, Math.min(maxX, x));
+	const clampedX = Math.max(minX, Math.min(maxX, x));
 
 	game.playerPositions[playerId] = { x: clampedX, y: clampedY };
+
+	handlePowerupPickup(game, playerId);
 }
 
 export function applyKick(game, playerId) {
 	if (!game || !game.isPlaying) {
-        return;
+		return;
 	}
 
 	const ball = game.ball;
 	const playerPos = game.playerPositions[playerId];
 	if (!playerPos) {
-        return;
+		return;
 	}
 
 	const ballRadius = ball.radius;
@@ -110,21 +247,73 @@ export function applyKick(game, playerId) {
 	const maxKickDistance = PLAYER_KICK_RADIUS + ballRadius;
 
 	if (dist > maxKickDistance) {
-        return;
+		return;
 	}
 
 	const nx = dx / dist;
 	const ny = dy / dist;
 
-	ball.vx += nx * KICK_ACCELERATION;
-	ball.vy += ny * KICK_ACCELERATION;
+	const powerState = game.playerPowerups && game.playerPowerups[playerId];
+	const kickMult = powerState && powerState.active && powerState.active.effects && powerState.active.effects.kickPowerMultiplier
+		? powerState.active.effects.kickPowerMultiplier
+		: 1;
+	const kickAccel = KICK_ACCELERATION * kickMult;
+
+	ball.vx += nx * kickAccel;
+	ball.vy += ny * kickAccel;
+}
+
+export function usePowerup(game, playerId, now = Date.now()) {
+	if (!game || !game.isPlaying) {
+		return;
+	}
+
+	const state = ensurePlayerPowerupState(game, playerId);
+	if (!state.heldTypeId) {
+		return;
+	}
+
+	const def = POWERUP_DEFS.find((p) => p.id === state.heldTypeId);
+	if (!def) {
+		state.heldTypeId = null;
+		return;
+	}
+
+	const durationMs = (def.durationSec || 0) * 1000;
+	state.active = {
+		typeId: def.id,
+		effects: def.effects || {},
+		expiresAt: now + durationMs
+	};
+	state.heldTypeId = null;
+}
+
+export function discardPowerup(game, playerId) {
+	if (!game || !game.isPlaying) {
+		return;
+	}
+	const state = ensurePlayerPowerupState(game, playerId);
+	state.heldTypeId = null;
 }
 
 export function stepGame(game, deltaTime, settings, now = Date.now()) {
 	const result = { roundReset: null, matchEnded: null };
 	if (!game || !game.isPlaying) {
-        return result;
+		return result;
 	}
+
+	if (!game.powerupsOnField) {
+		game.powerupsOnField = [];
+	}
+	if (!game.playerPowerups) {
+		game.playerPowerups = {};
+	}
+	if (!game.nextPowerupSpawnAt) {
+		game.nextPowerupSpawnAt = now + getRandomPowerupInterval();
+	}
+
+	updateActivePowerups(game, now);
+	spawnPowerupIfNeeded(game, now);
 
 	const ball = game.ball;
 	const rad = ball.radius;
@@ -157,10 +346,10 @@ export function stepGame(game, deltaTime, settings, now = Date.now()) {
 
 			let winnerSide = null;
 			if (game.score.left > game.score.right) {
-                winnerSide = "left";
-            } else if (game.score.right > game.score.left) {
-                winnerSide = "right";
-            }
+				winnerSide = "left";
+			} else if (game.score.right > game.score.left) {
+				winnerSide = "right";
+			}
 
 			result.matchEnded = {
 				score: { ...game.score },
@@ -196,12 +385,12 @@ export function stepGame(game, deltaTime, settings, now = Date.now()) {
 	}
 
 	const goalTop = FIELD_HEIGHT * GOAL_TOP_FACTOR;
-    const goalBottom = FIELD_HEIGHT * GOAL_BOTTOM_FACTOR;
-    const inGoalWindow = ball.y > goalTop && ball.y < goalBottom;
+	const goalBottom = FIELD_HEIGHT * GOAL_BOTTOM_FACTOR;
+	const inGoalWindow = ball.y > goalTop && ball.y < goalBottom;
 
-    const ballTop = ball.y - rad;
-    const ballBottom = ball.y + rad;
-    const ballFullyInGoalVertical = ballTop >= goalTop && ballBottom <= goalBottom;
+	const ballTop = ball.y - rad;
+	const ballBottom = ball.y + rad;
+	const ballFullyInGoalVertical = ballTop >= goalTop && ballBottom <= goalBottom;
 
 	if (inGoalWindow) {
 		if (ball.x < -GOAL_DEPTH) {
@@ -281,8 +470,8 @@ export function stepGame(game, deltaTime, settings, now = Date.now()) {
 		}
 
 		if (fullyInsideKick) {
-            anyFullyInsideKick = true;
-        }
+			anyFullyInsideKick = true;
+		}
 	}
 
 	if (anyFullyInsideKick) {
