@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, User, Lock, LogIn } from "lucide-react";
+import "../Pages-style/login.css";
+
 
 export default function Login() {
 	const [username, setUsername] = useState("");
@@ -38,66 +40,82 @@ export default function Login() {
 
 
 	return (
-		<div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 p-4">
-			<div className="w-full max-w-md bg-white/80 backdrop-blur-xl border border-gray-200 shadow-2xl rounded-2xl p-10 transition-all">
+		<div className="login-page-container">
 
-				<h1 className="text-4xl font-extrabold text-gray-900 text-center mb-2">
-					Welcome Back
-				</h1>
-				<p className="text-center text-gray-600 mb-8">
-					Sign in to continue
-				</p>
+			<div className="floating-shape blur-blue"></div>
+			<div className="floating-shape blur-purple"></div>
 
-				<form onSubmit={handleLogin} className="space-y-6">
+			<div className="login-wrapper">
+				
+				<div className="login-hero hidden md:flex">
+					<h1 className="hero-title">Welcome Back</h1>
+					<p className="hero-subtitle">
+						Access your account and continue where you left off.
+					</p>
+					<img
+						src="https://cdni.iconscout.com/illustration/premium/thumb/authentication-security-illustration-download-in-svg-png-gif-file-formats--internet-data-online-pack-design-development-illustrations-4847089.png"
+						className="hero-image"
+						alt="Login Illustration"
+					/>
+				</div>
 
-					<div className="relative group">
-						<User className="absolute left-3 top-3 text-gray-400 group-focus-within:text-blue-600 transition" size={20} />
-						<input
-							type="text"
-							placeholder="Username"
-							value={username}
-							onChange={(e) => setUsername(e.target.value)}
-							className="w-full pl-11 pr-3 py-3 border border-gray-300 rounded-xl bg-gray-50 focus:bg-white transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-							required
-						/>
-					</div>
+				<div className="login-card">
+					<div className="accent-bar"></div>
 
-					<div className="relative group">
-						<Lock className="absolute left-3 top-3 text-gray-400 group-focus-within:text-blue-600 transition" size={20} />
-						<input
-							type={showPassword ? "text" : "password"}
-							placeholder="Password"
-							value={password}
-							onChange={(e) => setPassword(e.target.value)}
-							className="w-full pl-11 pr-11 py-3 border border-gray-300 rounded-xl bg-gray-50 focus:bg-white transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-							required
-						/>
+					<h2 className="card-title">Sign In</h2>
+					<p className="card-subtitle">Enter your credentials</p>
+
+					<form onSubmit={handleLogin} className="space-y-6">
+
+						<div className="relative group">
+							<User className="input-icon" size={20} />
+							<input
+								type="text"
+								placeholder="Username"
+								value={username}
+								onChange={(e) => setUsername(e.target.value)}
+								className="modern-input"
+								required
+							/>
+						</div>
+
+						<div className="relative group">
+							<Lock className="input-icon" size={20} />
+							<input
+								type={showPassword ? "text" : "password"}
+								placeholder="Password"
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								className="modern-input"
+								required
+							/>
+							<button
+								type="button"
+								onClick={() => setShowPassword(!showPassword)}
+								className="password-toggle"
+							>
+								{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+							</button>
+						</div>
 
 						<button
-							type="button"
-							onClick={() => setShowPassword(!showPassword)}
-							className="absolute right-3 top-3 text-gray-500 hover:text-gray-700 transition"
+							type="submit"
+							disabled={isLoading}
+							className="modern-btn"
 						>
-							{showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+							<LogIn size={18} />
+							{isLoading ? "Logging in..." : "Login"}
 						</button>
-					</div>
+					</form>
 
-					<button
-						type="submit"
-						disabled={isLoading}
-						className="w-full flex items-center justify-center gap-2 bg-blue-600 text-white py-3 rounded-xl font-semibold shadow-md hover:bg-blue-700 disabled:opacity-60 transition-all"
-					>
-						<LogIn size={20} />
-						{isLoading ? "Logging in..." : "Login"}
-					</button>
-				</form>
+					<p className="register-text">
+						Don't have an account?{" "}
+						<Link to="/register" className="text-blue-600 font-medium hover:underline">
+							Register here
+						</Link>
+					</p>
+				</div>
 
-				<p className="text-center text-gray-600 text-sm mt-8">
-					Don't have an account?{" "}
-					<Link to="/register" className="text-blue-600 font-medium hover:underline">
-						Register here
-					</Link>
-				</p>
 			</div>
 		</div>
 	);
