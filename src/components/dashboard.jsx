@@ -29,7 +29,7 @@ export default function Dashboard() {
 				setIsLoggedIn(data.valid === true);
 			} catch (err) {
 				console.error("Login check failed:", err);
-				setIsLoggedIn(false);
+				//setIsLoggedIn(false);
 			} finally {
 				setIsChecking(false);
 			}

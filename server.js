@@ -140,6 +140,33 @@
     }
   }
 
+  async function createSession(username) {
+    const token = crypto.randomBytes(32).toString("hex");
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    
+    await pool.query(
+        "INSERT INTO sessions (token, username, expires_at) VALUES ($1, $2, $3)",
+        [token, username, expiresAt]
+    );
+    
+    return token;
+}
+
+async function validateSession(token) {
+    if (!token) return null;
+    
+    const result = await pool.query(
+        "SELECT username FROM sessions WHERE token = $1 AND expires_at > NOW()",
+        [token]
+    );
+    
+    return result.rows.length > 0 ? result.rows[0].username : null;
+}
+
+async function deleteSession(token) {
+    await pool.query("DELETE FROM sessions WHERE token = $1", [token]);
+}
+
   app.get("/api/leaderboard", async (req, res) => {
       try {
           const result = await pool.query(`
@@ -158,29 +185,29 @@
 
   app.get("/api/profileData", async (req, res) => {
     try {
-      const token = req.cookies.token;
-      if (!token || !tokenStorage[token]) {
-        return res.json({ success: false });
-      }
+        const token = req.cookies.token;
+        const username = await validateSession(token);
+        
+        if (!username) {
+            return res.json({ success: false });
+        }
 
-      const username = tokenStorage[token];
+        const result = await pool.query(
+            "SELECT username FROM users WHERE username = $1",
+            [username]
+        );
 
-      const result = await pool.query(
-        "SELECT username FROM users WHERE username = $1",
-        [username]
-      );
+        if (result.rows.length === 0) {
+            return res.json({ success: false });
+        }
 
-      if (result.rows.length === 0)
-      return res.json({ success: false });
-
-    return res.json({
-      success: true,
-      playername: result.rows[0].username
-    });
-
+        return res.json({
+            success: true,
+            playername: result.rows[0].username
+        });
     } catch (err) {
-      console.error("Leaderboard error:", err);
-      return res.status(500).json({ message: "Server error loading leaderboard" });
+        console.error("Profile data error:", err);
+        return res.status(500).json({ message: "Server error loading profile" });
     }
   });
 
@@ -189,50 +216,51 @@
     return res.json({ roomId });
   });
 
-  app.get("/api/validate-token", (req, res) => {
-      try {
+  app.get("/api/validate-token", async (req, res) => {
+    try {
         const { token } = req.cookies;
-        
-        console.log("Validating token:", token);
-        console.log("Available tokens:", Object.keys(tokenStorage));
+        const username = await validateSession(token);
 
-        if (token && tokenStorage[token]) {
+        if (username) {
             return res.json({ 
-              valid: true, 
-              username: tokenStorage[token] 
+                valid: true, 
+                username: username 
             });
         }
 
         return res.json({ valid: false });
-      } catch (error) {
+    } catch (error) {
         console.error("Token validation error:", error);
         return res.json({ valid: false });
-      }
+    }
   });
 
   app.post("/api/register", async (req, res) => {
     const { username, password } = req.body;
 
     try {
-      const testResult = await pool.query(`SELECT * FROM users`);
-      console.log("THIS IS A TEST:\n\n\n\n", testResult.rows);
+        const existing = await pool.query(
+            "SELECT * FROM users WHERE username = $1", 
+            [username]
+        );
+        
+        if (existing.rows.length > 0) {
+            return res.status(400).json({ message: "User already exists" });
+        }
 
-      const existing = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
-      if (existing.rows.length > 0) {
-        return res.status(400).json({ message: "User already exists" });
-      }
+        const hashed = await bcrypt.hash(password, 10);
+        await pool.query(
+            "INSERT INTO users (username, password) VALUES ($1, $2)", 
+            [username, hashed]
+        );
 
-      const hashed = await bcrypt.hash(password, 10);
-      await pool.query("INSERT INTO users (username, password) VALUES ($1, $2)", [username, hashed]);
+        const token = await createSession(username);
 
-      const token = makeToken();
-      tokenStorage[token] = username;
-
-      res.cookie("token", token, cookieOptions);
-      return res.status(201).json({ message: "User registered & logged in" });
+        res.cookie("token", token, cookieOptions);
+        return res.status(201).json({ message: "User registered & logged in" });
     } catch (err) {
-      console.error("Registration error:", err);
-      return res.status(500).json({ message: "Server error" });
+        console.error("Registration error:", err);
+        return res.status(500).json({ message: "Server error" });
     }
   });
 
@@ -240,113 +268,133 @@
     const { username, password } = req.body;
 
     try {
-      const result = await pool.query("SELECT * FROM users WHERE username = $1", [username]);
-      if (result.rows.length === 0) {
-        return res.status(401).json({ message: "Invalid username or password" });
-      }
+        const result = await pool.query(
+            "SELECT * FROM users WHERE username = $1", 
+            [username]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(401).json({ message: "Invalid username or password" });
+        }
 
-      const user = result.rows[0];
-      const valid = await bcrypt.compare(password, user.password);
+        const user = result.rows[0];
+        const valid = await bcrypt.compare(password, user.password);
 
-      if (!valid) {
-        return res.status(401).json({ message: "Invalid username or password" });
-      }
+        if (!valid) {
+            return res.status(401).json({ message: "Invalid username or password" });
+        }
 
-      let token = makeToken();
-      tokenStorage[token] = username;
+        const token = await createSession(username);
 
-      res.cookie("token", token, cookieOptions);
-      return res.status(200).json({
-        message: "Login successful",
-        user: { username: user.username },
-        token: token
-      });
+        res.cookie("token", token, cookieOptions);
+        return res.status(200).json({
+            message: "Login successful",
+            user: { username: user.username },
+            token: token
+        });
     } catch (err) {
-      console.error("Login error:", err);
-      return res.status(500).json({ message: "Server error" });
+        console.error("Login error:", err);
+        return res.status(500).json({ message: "Server error" });
     }
   });
 
   app.post("/api/match-result", async (req, res) => {
     const { token } = req.cookies;
     const { roomId, won } = req.body;
-    console.log("Match result received:", { token, roomId, won });
 
-    if (!token || !tokenStorage[token]) {
-      return res.status(401).json({ message: "Not logged in" });
+    try {
+        const username = await validateSession(token);
+        
+        if (!username) {
+            return res.status(401).json({ message: "Not logged in" });
+        }
+
+        if (!roomId || typeof won !== "boolean") {
+            return res.status(400).json({ message: "Invalid data" });
+        }
+
+        const upperRoomId = roomId.toUpperCase();
+        const room = rooms[upperRoomId];
+
+        if (!room || !room.isCompetitive) {
+            return res.json({ message: "Not a competitive match or room not found" });
+        }
+
+        const scoreChange = won ? 5 : -5;
+        
+        await pool.query(
+            "UPDATE users SET score = score + $1 WHERE username = $2",
+            [scoreChange, username]
+        );
+
+        const result = await pool.query(
+            "SELECT score FROM users WHERE username = $1",
+            [username]
+        );
+
+        const newScore = result.rows[0]?.score || 0;
+
+        console.log(`Updated score for ${username}: ${won ? "+" : ""}${scoreChange} (new total: ${newScore})`);
+
+        return res.json({ 
+            success: true, 
+            scoreChange,
+            newScore 
+        });
+    } catch (err) {
+        console.error("Score update error:", err);
+        return res.status(500).json({ message: "Server error updating score" });
     }
+  });
 
-    if (!roomId || typeof won !== "boolean") {
-      return res.status(400).json({ message: "Invalid data" });
+
+  let authorize = async (req, res, next) => {
+    let { token } = req.cookies;
+    
+    try {
+        const username = await validateSession(token);
+        
+        if (!username) {
+            return res.sendStatus(403);
+        }
+        
+        req.username = username; // Attach username to request
+        next();
+    } catch (err) {
+        console.error("Authorization error:", err);
+        return res.sendStatus(403);
     }
+};
 
-    const username = tokenStorage[token];
-    const upperRoomId = roomId.toUpperCase();
-    const room = rooms[upperRoomId];
 
-    if (!room || !room.isCompetitive) {
-      return res.json({ message: "Not a competitive match or room not found" });
+  app.post("/api/logout", async (req, res) => {
+    const { token } = req.cookies;
+
+    if (!token) {
+        return res.sendStatus(400);
     }
 
     try {
-      const scoreChange = won ? 5 : -5;
-      
-      await pool.query(
-        "UPDATE users SET score = score + $1 WHERE username = $2",
-        [scoreChange, username]
-      );
-
-      const result = await pool.query(
-        "SELECT score FROM users WHERE username = $1",
-        [username]
-      );
-
-      const newScore = result.rows[0]?.score || 0;
-
-      console.log(`Updated score for ${username}: ${won ? "+" : ""}${scoreChange} (new total: ${newScore})`);
-
-      return res.json({ 
-        success: true, 
-        scoreChange,
-        newScore 
-      });
+        await deleteSession(token);
+        
+        res.cookie("token", "", {
+            httpOnly: true,
+            secure: true,
+            sameSite: "none",
+            path: "/",
+            expires: new Date(0)
+        });
+        
+        return res.sendStatus(200);
     } catch (err) {
-      console.error("Score update error:", err);
-      return res.status(500).json({ message: "Server error updating score" });
+        console.error("Logout error:", err);
+        return res.sendStatus(500);
     }
-  });
-
-
-  let authorize = (req, res, next) => {
-    let { token } = req.cookies;
-    console.log(token, tokenStorage);
-    if (token === undefined || !tokenStorage.hasOwnProperty(token)) {
-      return res.sendStatus(403); // TODO
-    }
-    next();
-  };
-
-  app.post("/api/logout", (req, res) => {
-    const { token } = req.cookies;
-
-    if (!token || !tokenStorage[token]) {
-      return res.sendStatus(400);
-    }
-
-    delete tokenStorage[token];
-    res.cookie("token", "", {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      path: "/",
-      expires: new Date(0)
-    });
-    return res.sendStatus(200);
   });
 
   app.post("/api/upload-avatar", authorize, upload.single("avatar"), async (req, res) => {
-    const { token } = req.cookies;
-    const username = tokenStorage[token];
+    // Now req.username is set by the authorize middleware
+    const username = req.username;
 
     if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
@@ -365,7 +413,7 @@
         console.error("Avatar update error:", err);
         return res.status(500).json({ message: "Server error saving avatar" });
     }
-});
+  });
 
   function tryMatchCompetitivePlayers() {
     if (competitiveQueue.length < 2) return null;
@@ -375,10 +423,10 @@
     const roomId = generateRoomCode();
 
     rooms[roomId] = {
-      settings: { matchDurationSec: 180, goalLimit: 5 },
-      players: {},
-      game: null,
-      isCompetitive: true
+        settings: { matchDurationSec: 180, goalLimit: 5 },
+        players: {},
+        game: null,
+        isCompetitive: true
     };
 
     return { roomId, p1, p2 };
@@ -393,25 +441,25 @@
     const roomId = generateRoomCode();
 
     rooms[roomId] = {
-      settings: { matchDurationSec: 180, goalLimit: 5 },
-      players: {},
-      game: null,
-      isCompetitive: false
+        settings: { matchDurationSec: 180, goalLimit: 5 },
+        players: {},
+        game: null,
+        isCompetitive: false
     };
 
     return { roomId, p1, p2 };
   }
 
   app.post("/join-casual", authorize, async (req, res) => {
-    const { token } = req.cookies;
-    const username = tokenStorage[token];
+    // Now req.username is set by the authorize middleware
+    const username = req.username;
 
     if (!username) {
-      return res.status(401).json({ message: "Not logged in" });
+        return res.status(401).json({ message: "Not logged in" });
     }
 
     if (casualQueue.find(p => p.username === username)) {
-      return res.json({ matched: false });
+        return res.json({ matched: false });
     }
 
     casualQueue.push({ username });
@@ -420,69 +468,69 @@
     const match = tryMatchCasualPlayers();
 
     if (match) {
-      const { roomId, p1, p2 } = match;
-      const p1SocketId = usernameToSocketId[p1.username];
-      const p2SocketId = usernameToSocketId[p2.username];
+        const { roomId, p1, p2 } = match;
+        const p1SocketId = usernameToSocketId[p1.username];
+        const p2SocketId = usernameToSocketId[p2.username];
 
-      if (!p1SocketId || !p2SocketId) {
-        console.warn("Sockets not ready yet");
-        casualQueue.push(p1, p2);
-        return res.json({ matched: false });
-      }
+        if (!p1SocketId || !p2SocketId) {
+            console.warn("Sockets not ready yet");
+            casualQueue.push(p1, p2);
+            return res.json({ matched: false });
+        }
 
-      const p1Socket = io.sockets.sockets.get(p1SocketId);
-      const p2Socket = io.sockets.sockets.get(p2SocketId);
-      
-      if (p1Socket) p1Socket.join(roomId);
-      if (p2Socket) p2Socket.join(roomId);
+        const p1Socket = io.sockets.sockets.get(p1SocketId);
+        const p2Socket = io.sockets.sockets.get(p2SocketId);
+        
+        if (p1Socket) p1Socket.join(roomId);
+        if (p2Socket) p2Socket.join(roomId);
 
-      rooms[roomId].players = {
-        [p1SocketId]: { id: p1SocketId, username: p1.username, isHost: true },
-        [p2SocketId]: { id: p2SocketId, username: p2.username, isHost: false }
-      };
+        rooms[roomId].players = {
+            [p1SocketId]: { id: p1SocketId, username: p1.username, isHost: true },
+            [p2SocketId]: { id: p2SocketId, username: p2.username, isHost: false }
+        };
 
-      rooms[roomId].game = createInitialGameState(rooms[roomId]);
+        rooms[roomId].game = createInitialGameState(rooms[roomId]);
 
-      io.to(p1SocketId).emit("casualMatched", {
-        roomId,
-        you: p1.username,
-        opponent: p2.username,
-        isHost: true
-      });
-      io.to(p2SocketId).emit("casualMatched", {
-        roomId,
-        you: p2.username,
-        opponent: p1.username,
-        isHost: false
-      });
-
-      setTimeout(() => {
-        io.to(p1SocketId).emit("gameStarted", {
-          roomId: roomId,
-          settings: rooms[roomId].settings
+        io.to(p1SocketId).emit("casualMatched", {
+            roomId,
+            you: p1.username,
+            opponent: p2.username,
+            isHost: true
         });
-        io.to(p2SocketId).emit("gameStarted", {
-          roomId: roomId,
-          settings: rooms[roomId].settings
+        io.to(p2SocketId).emit("casualMatched", {
+            roomId,
+            you: p2.username,
+            opponent: p1.username,
+            isHost: false
         });
-      }, 3000);
 
-      return res.json({ matched: true, roomId });
+        setTimeout(() => {
+            io.to(p1SocketId).emit("gameStarted", {
+                roomId: roomId,
+                settings: rooms[roomId].settings
+            });
+            io.to(p2SocketId).emit("gameStarted", {
+                roomId: roomId,
+                settings: rooms[roomId].settings
+            });
+        }, 3000);
+
+        return res.json({ matched: true, roomId });
     }
 
     return res.json({ matched: false });
   });
 
   app.post("/join-competitive", authorize, async (req, res) => {
-    const { token } = req.cookies;
-    const username = tokenStorage[token];
+    // Now req.username is set by the authorize middleware
+    const username = req.username;
 
     if (!username) {
-      return res.status(401).json({ message: "Not logged in" });
+        return res.status(401).json({ message: "Not logged in" });
     }
 
     if (competitiveQueue.find(p => p.username === username)) {
-      return res.json({ matched: false });
+        return res.json({ matched: false });
     }
 
     competitiveQueue.push({ username });
@@ -491,54 +539,54 @@
     const match = tryMatchCompetitivePlayers();
 
     if (match) {
-      const { roomId, p1, p2 } = match;
-      const p1SocketId = usernameToSocketId[p1.username];
-      const p2SocketId = usernameToSocketId[p2.username];
+        const { roomId, p1, p2 } = match;
+        const p1SocketId = usernameToSocketId[p1.username];
+        const p2SocketId = usernameToSocketId[p2.username];
 
-      if (!p1SocketId || !p2SocketId) {
-        console.warn("Sockets not ready yet");
-        competitiveQueue.push(p1, p2);
-        return res.json({ matched: false });
-      }
+        if (!p1SocketId || !p2SocketId) {
+            console.warn("Sockets not ready yet");
+            competitiveQueue.push(p1, p2);
+            return res.json({ matched: false });
+        }
 
-      const p1Socket = io.sockets.sockets.get(p1SocketId);
-      const p2Socket = io.sockets.sockets.get(p2SocketId);
-      
-      if (p1Socket) p1Socket.join(roomId);
-      if (p2Socket) p2Socket.join(roomId);
+        const p1Socket = io.sockets.sockets.get(p1SocketId);
+        const p2Socket = io.sockets.sockets.get(p2SocketId);
+        
+        if (p1Socket) p1Socket.join(roomId);
+        if (p2Socket) p2Socket.join(roomId);
 
-      rooms[roomId].players = {
-        [p1SocketId]: { id: p1SocketId, username: p1.username, isHost: true },
-        [p2SocketId]: { id: p2SocketId, username: p2.username, isHost: false }
-      };
+        rooms[roomId].players = {
+            [p1SocketId]: { id: p1SocketId, username: p1.username, isHost: true },
+            [p2SocketId]: { id: p2SocketId, username: p2.username, isHost: false }
+        };
 
-      rooms[roomId].game = createInitialGameState(rooms[roomId]);
+        rooms[roomId].game = createInitialGameState(rooms[roomId]);
 
-      io.to(p1SocketId).emit("competitiveMatched", {
-        roomId,
-        you: p1.username,
-        opponent: p2.username,
-        isHost: true
-      });
-      io.to(p2SocketId).emit("competitiveMatched", {
-        roomId,
-        you: p2.username,
-        opponent: p1.username,
-        isHost: false
-      });
-
-      setTimeout(() => {
-        io.to(p1SocketId).emit("gameStarted", {
-          roomId: roomId,
-          settings: rooms[roomId].settings
+        io.to(p1SocketId).emit("competitiveMatched", {
+            roomId,
+            you: p1.username,
+            opponent: p2.username,
+            isHost: true
         });
-        io.to(p2SocketId).emit("gameStarted", {
-          roomId: roomId,
-          settings: rooms[roomId].settings
+        io.to(p2SocketId).emit("competitiveMatched", {
+            roomId,
+            you: p2.username,
+            opponent: p1.username,
+            isHost: false
         });
-      }, 3000);
 
-      return res.json({ matched: true, roomId });
+        setTimeout(() => {
+            io.to(p1SocketId).emit("gameStarted", {
+                roomId: roomId,
+                settings: rooms[roomId].settings
+            });
+            io.to(p2SocketId).emit("gameStarted", {
+                roomId: roomId,
+                settings: rooms[roomId].settings
+            });
+        }, 3000);
+
+        return res.json({ matched: true, roomId });
     }
 
     return res.json({ matched: false });
